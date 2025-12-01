@@ -20,6 +20,11 @@ requires-python = ">=3.9"
 asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+filterwarnings = [
+    # Ignore ReactPy deprecation warnings for asyncio.iscoroutinefunction (Python 3.14+)
+    # This is an upstream issue in ReactPy that needs to be fixed there
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+]
 
 [dependency-groups]
 dev = [

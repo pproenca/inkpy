@@ -155,7 +155,7 @@ class Ink:
         
         # Try to get existing event loop, or create a new one
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
             # Event loop is running - use thread pool
             import concurrent.futures
             with concurrent.futures.ThreadPoolExecutor() as pool:

@@ -1,7 +1,13 @@
 """
 Instances registry - stores Ink instances per stdout stream
 """
-from typing import Dict, Optional, TextIO
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Dict, Optional, TextIO
+
+if TYPE_CHECKING:
+    from inkpy.ink import Ink
+
 
 class Instances:
     """Registry of Ink instances per stdout stream"""

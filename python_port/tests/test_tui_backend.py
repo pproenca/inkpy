@@ -88,7 +88,7 @@ def test_backend_handles_internal_transform():
         return Text("Test", color="red")
     
     backend = TUIBackend()
-    root = backend.mount(App())
+    _root = backend.mount(App())  # noqa: F841 - Mount verifies transform handling
     
     # internal_transform should be preserved on text nodes
     # This is tested by checking if transform function exists
@@ -117,7 +117,7 @@ def test_backend_unmount():
         return Box(Text("Test"))
     
     backend = TUIBackend()
-    root = backend.mount(App())
+    backend.mount(App())
     assert backend.root is not None
     
     backend.unmount()

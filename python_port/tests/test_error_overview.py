@@ -62,10 +62,10 @@ async def test_error_overview_shows_file_location():
 async def test_error_overview_shows_code_excerpt():
     """Test ErrorOverview shows code excerpt around error line"""
     def test_function():
-        x = 1
-        y = 2
+        _x = 1  # noqa: F841 - Intentional: simulating code context around error
+        _y = 2  # noqa: F841 - Intentional: simulating code context around error
         raise ValueError("Error here")
-        z = 3
+        _z = 3  # noqa: F841 - Intentional: simulating code context around error
     
     try:
         test_function()
@@ -118,9 +118,9 @@ async def test_error_overview_handles_missing_stack():
 async def test_error_overview_highlights_error_line():
     """Test ErrorOverview highlights the error line in code excerpt"""
     def test_function():
-        line1 = "ok"
-        line2 = "error here"  # This line should be highlighted
-        line3 = "ok"
+        _line1 = "ok"  # noqa: F841 - Intentional: simulating code context
+        _line2 = "error here"  # noqa: F841 - This line should be highlighted
+        _line3 = "ok"  # noqa: F841 - Intentional: simulating code context
         raise ValueError("Error")
     
     try:

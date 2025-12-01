@@ -80,7 +80,7 @@ def test_render_singleton_per_stdout():
         return Text("Test")
     
     instance1 = render(App(), stdout=stdout1)
-    instance2 = render(App(), stdout=stdout1)
+    _instance2 = render(App(), stdout=stdout1)  # noqa: F841 - Testing singleton behavior
     
     # Should reuse same Ink instance
     instance1.unmount()

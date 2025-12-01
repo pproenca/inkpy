@@ -12,4 +12,7 @@ from .error_overview import ErrorOverview
 from .accessibility_context import accessibility_context
 from .background_context import background_context
 
-__all__ = ['Box', 'Text', 'Static', 'Newline', 'Spacer', 'Transform', 'ErrorOverview']
+__all__ = [
+    'Box', 'Text', 'Static', 'Newline', 'Spacer', 'Transform', 'ErrorOverview',
+    'accessibility_context', 'background_context',
+]

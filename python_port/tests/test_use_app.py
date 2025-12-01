@@ -4,8 +4,6 @@ from inkpy.hooks.use_app import use_app
 
 def test_use_app_provides_exit():
     """Test that useApp hook provides exit function"""
-    exit_called = []
-    
     @component
     def TestApp():
         app = use_app()

@@ -184,7 +184,8 @@ class YogaNode:
         poga.PogaLayout.__apply_layout_to_view_hierarchy__(self.view, False)
 
     def _debug_print_frames(self, node, depth):
-        indent = "  " * depth
+        # Debug helper - uncomment print line to see frames
+        # indent = "  " * depth
         # print(f"{indent}{node.view._frame}")
         for child in node.children:
             self._debug_print_frames(child, depth + 1)

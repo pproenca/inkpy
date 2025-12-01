@@ -45,7 +45,7 @@ def test_use_focus_with_custom_id():
     """Test useFocus with custom ID"""
     @component
     def CustomIdItem():
-        focus = use_focus(id="my-custom-id")
+        _focus = use_focus(id="my-custom-id")  # noqa: F841 - Hook called for side effects
         return Text("Item")
 
 def test_focus_manager_navigation():

@@ -1,8 +1,12 @@
 # test_ink.py
+import asyncio
 import io
+
+import pytest
+from reactpy import component
+
 from inkpy.ink import Ink
 from inkpy.components.text import Text
-from reactpy import component
 
 class MockStdout:
     def __init__(self):
@@ -38,7 +42,7 @@ def test_ink_initialization():
     )
     
     assert ink is not None
-    assert ink.is_unmounted == False
+    assert ink.is_unmounted is False
 
 def test_ink_render():
     """Test Ink can render a component"""
@@ -73,20 +77,23 @@ def test_ink_unmount():
     ink.render(App())
     ink.unmount()
     
-    assert ink.is_unmounted == True
+    assert ink.is_unmounted is True
 
-def test_ink_wait_until_exit():
-    """Test waitUntilExit returns a promise"""
+@pytest.mark.asyncio
+async def test_ink_wait_until_exit():
+    """Test waitUntilExit returns a coroutine that resolves on unmount"""
     ink = Ink(
         stdout=MockStdout(),
         stdin=io.StringIO(),
         stderr=MockStdout(),
     )
     
-    exit_promise = ink.wait_until_exit()
-    assert exit_promise is not None
-    # Promise should resolve when unmounted
+    exit_coro = ink.wait_until_exit()
+    assert asyncio.iscoroutine(exit_coro)
+    
+    # Unmount should resolve the coroutine
     ink.unmount()
+    await exit_coro
 
 def test_ink_calculate_layout():
     """Test layout calculation"""

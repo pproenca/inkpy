@@ -19,8 +19,6 @@ async def _render_component(comp):
 @pytest.mark.asyncio
 async def test_use_input_sets_up_raw_mode():
     """Test useInput sets up raw mode when active"""
-    raw_mode_set = {'value': False}
-    
     @component
     def TestComponent():
         def handle_input(input_str: str, key: Key):

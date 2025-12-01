@@ -77,7 +77,6 @@ def test_multi_component_layout():
     stdout.columns = 80
     
     instance = render(App(), stdout=stdout, debug=True)
-    output = stdout.getvalue()
     assert instance is not None
     instance.unmount()
 
@@ -95,7 +94,6 @@ def test_borders_and_colors():
     stdout.columns = 80
     
     instance = render(App(), stdout=stdout, debug=True)
-    output = stdout.getvalue()
     assert instance is not None
     instance.unmount()
 
@@ -114,7 +112,6 @@ def test_text_wrapping():
     stdout.columns = 80
     
     instance = render(App(), stdout=stdout, debug=True)
-    output = stdout.getvalue()
     assert instance is not None
     instance.unmount()
 
@@ -135,7 +132,6 @@ def test_focus_navigation():
     stdout.columns = 80
     
     instance = render(App(), stdout=stdout, debug=True)
-    output = stdout.getvalue()
     assert instance is not None
     instance.unmount()
 
@@ -204,7 +200,6 @@ def test_nested_components():
     stdout.columns = 80
     
     instance = render(App(), stdout=stdout, debug=True)
-    output = stdout.getvalue()
     assert instance is not None
     instance.unmount()
 
@@ -222,10 +217,7 @@ def test_instance_rerender():
     stdout.columns = 80
     
     instance = render(App1(), stdout=stdout, debug=True)
-    output1 = stdout.getvalue()
-    
     instance.rerender(App2())
-    output2 = stdout.getvalue()
     
     assert instance is not None
     instance.unmount()

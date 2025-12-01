@@ -55,7 +55,7 @@ async def test_box_with_aria_hidden():
     
     div = _find_div_in_vdom(vdom)
     assert div is not None
-    assert div['attributes'].get('aria-hidden') == True
+    assert div['attributes'].get('aria-hidden') is True
 
 
 @pytest.mark.asyncio
@@ -126,7 +126,7 @@ async def test_box_aria_hidden_with_screen_reader():
     # In non-screen-reader mode, aria-hidden should be in attributes
     div = _find_div_in_vdom(vdom)
     if div:
-        assert div['attributes'].get('aria-hidden') == True
+        assert div['attributes'].get('aria-hidden') is True
 
 
 @pytest.mark.asyncio

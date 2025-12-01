@@ -1,9 +1,13 @@
 """
 Comprehensive tests for Ink class with all features
 """
+import asyncio
 import io
 import os
 from unittest.mock import patch
+
+import pytest
+
 from inkpy.ink import Ink
 
 
@@ -50,9 +54,9 @@ def test_ink_initialization_with_all_options():
     )
     
     assert ink is not None
-    assert ink.is_unmounted == False
+    assert ink.is_unmounted is False
     assert ink.options['max_fps'] == 30
-    assert ink.options['incremental_rendering'] == False
+    assert ink.options['incremental_rendering'] is False
 
 
 def test_ink_screen_reader_from_env():
@@ -66,7 +70,7 @@ def test_ink_screen_reader_from_env():
             stderr=MockStdout(),
             is_screen_reader_enabled=None,  # Should read from env
         )
-        assert ink.is_screen_reader_enabled == True
+        assert ink.is_screen_reader_enabled is True
     
     with patch.dict(os.environ, {'INK_SCREEN_READER': 'false'}):
         ink = Ink(
@@ -75,7 +79,7 @@ def test_ink_screen_reader_from_env():
             stderr=MockStdout(),
             is_screen_reader_enabled=None,
         )
-        assert ink.is_screen_reader_enabled == False
+        assert ink.is_screen_reader_enabled is False
 
 
 def test_ink_screen_reader_explicit():
@@ -89,7 +93,7 @@ def test_ink_screen_reader_explicit():
             stderr=MockStdout(),
             is_screen_reader_enabled=False,  # Explicit should override env
         )
-        assert ink.is_screen_reader_enabled == False
+        assert ink.is_screen_reader_enabled is False
 
 
 def test_ink_throttle_setup():
@@ -130,7 +134,7 @@ def test_ink_no_throttle_in_debug_mode():
     )
     
     # In debug mode, should not throttle (unthrottled = True)
-    assert ink._unthrottled == True
+    assert ink._unthrottled is True
 
 
 def test_ink_no_throttle_with_screen_reader():
@@ -146,7 +150,7 @@ def test_ink_no_throttle_with_screen_reader():
     )
     
     # With screen reader, should not throttle
-    assert ink._unthrottled == True
+    assert ink._unthrottled is True
 
 
 def test_ink_terminal_resize_handler():
@@ -236,9 +240,9 @@ def test_ink_on_render_callback():
     assert ink.options.get('on_render') == on_render
 
 
-def test_ink_wait_until_exit():
-    """Test wait_until_exit returns a future"""
-    import asyncio
+@pytest.mark.asyncio
+async def test_ink_wait_until_exit():
+    """Test wait_until_exit returns a coroutine that resolves on unmount"""
     
     stdout = MockStdout()
     
@@ -249,14 +253,16 @@ def test_ink_wait_until_exit():
     )
     
     # Should return a coroutine/future
-    exit_future = ink.wait_until_exit()
-    assert asyncio.iscoroutine(exit_future)
+    exit_coro = ink.wait_until_exit()
+    assert asyncio.iscoroutine(exit_coro)
+    
+    # Unmount and await to avoid "coroutine never awaited" warning
+    ink.unmount()
+    await exit_coro
 
 
 def test_ink_unmount_resolves_exit_promise():
     """Test unmount resolves exit promise"""
-    import asyncio
-    
     stdout = MockStdout()
     
     ink = Ink(
