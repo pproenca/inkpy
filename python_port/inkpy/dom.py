@@ -147,6 +147,10 @@ def set_style(node: Union[DOMElement, TextNode], style: Dict[str, Any]):
     if node.yoga_node:
         node.yoga_node.set_style(style)
 
+def set_text_node_value(node: TextNode, value: str):
+    """Set text value on text node"""
+    node.node_value = value
+
 # Helper functions
 def measure_text_node(node: Union[DOMElement, TextNode], width: float, height: float) -> Dict[str, float]:
     """Measure text node dimensions"""
