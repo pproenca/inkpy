@@ -191,29 +191,48 @@ def slice_ansi(text: str, start: int, end: Optional[int] = None) -> str:
 
 def styled_chars_from_tokens(tokens: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Convert tokens to styled character list.
+    Convert tokens to styled character list matching TypeScript API.
     
-    Each character includes its ANSI style information.
+    Each character includes its ANSI style information in the format:
+    {type: 'char', value: str, fullWidth: bool, styles: List[str]}
     
     Args:
         tokens: List of tokens from tokenize_ansi
     
     Returns:
-        List of character dictionaries with 'char' and 'style' fields
+        List of character dictionaries matching TypeScript StyledChar format
     """
     styled_chars = []
-    current_style = ''
+    current_styles: List[str] = []
     
     for token in tokens:
         if token['type'] == 'ansi':
-            # Update current style
-            current_style = token['value']
+            # Update current styles - accumulate ANSI codes
+            ansi_code = token['value']
+            # Reset code clears all styles
+            if ansi_code == '\x1b[0m':
+                current_styles = []
+            else:
+                # Add new style code (don't duplicate)
+                if ansi_code not in current_styles:
+                    current_styles.append(ansi_code)
         elif token['type'] == 'text':
-            # Add each character with current style
+            # Add each character with current styles
             for char in token['text']:
+                # Calculate character width
+                if HAS_WCWIDTH:
+                    char_width = wcwidth.wcwidth(char)
+                else:
+                    char_width = _fallback_wcwidth(char)
+                
+                # fullWidth is True if character takes 2+ columns
+                full_width = char_width >= 2
+                
                 styled_chars.append({
-                    'char': char,
-                    'style': current_style
+                    'type': 'char',
+                    'value': char,
+                    'fullWidth': full_width,
+                    'styles': current_styles.copy()  # Copy to avoid mutation
                 })
     
     return styled_chars
@@ -223,32 +242,50 @@ def styled_chars_to_string(styled_chars: List[Dict[str, Any]]) -> str:
     """
     Convert styled character list back to string with ANSI codes.
     
+    Matches TypeScript API: accepts StyledChar objects with
+    {type: 'char', value: str, fullWidth: bool, styles: List[str]}
+    
     Args:
-        styled_chars: List of character dictionaries
+        styled_chars: List of character dictionaries matching TypeScript format
     
     Returns:
         String with ANSI codes inserted appropriately
     """
+    if not styled_chars:
+        return ''
+    
     result = []
-    last_style = None
+    last_styles: List[str] = []
     
     for char_info in styled_chars:
-        char = char_info['char']
-        style = char_info.get('style', '')
+        # Support both old format (for backward compat) and new format
+        if 'type' in char_info and char_info['type'] == 'char':
+            # New format: {type: 'char', value: str, fullWidth: bool, styles: List[str]}
+            char = char_info['value']
+            styles = char_info.get('styles', [])
+        else:
+            # Old format: {char: str, style: str} (for backward compatibility)
+            char = char_info.get('char', char_info.get('value', ''))
+            style_str = char_info.get('style', '')
+            styles = [style_str] if style_str else []
         
-        # Insert ANSI code if style changed
-        if style != last_style:
-            if last_style is not None:
-                # Reset previous style
+        # Check if styles changed
+        if styles != last_styles:
+            # Reset if we had previous styles
+            if last_styles:
                 result.append('\x1b[0m')
-            if style:
+            
+            # Apply new styles
+            for style in styles:
+                if style:  # Only add non-empty styles
                 result.append(style)
-            last_style = style
+            
+            last_styles = styles.copy()
         
         result.append(char)
     
-    # Reset style at end if needed
-    if last_style:
+    # Reset style at end if we had any styles
+    if last_styles:
         result.append('\x1b[0m')
     
     return ''.join(result)

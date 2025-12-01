@@ -99,7 +99,18 @@ def _truncate_text(text: str, max_width: int, truncate_type: str) -> str:
     """
     Truncate text to max width using ANSI-aware operations.
     Matches cli-truncate behavior.
+    
+    Handles multiline text by truncating each line separately.
     """
+    # Handle multiline text
+    if '\n' in text:
+        lines = text.split('\n')
+        truncated_lines = [
+            _truncate_text(line, max_width, truncate_type)
+            for line in lines
+        ]
+        return '\n'.join(truncated_lines)
+    
     text_width = string_width(text)
     
     if text_width <= max_width:
@@ -109,21 +120,85 @@ def _truncate_text(text: str, max_width: int, truncate_type: str) -> str:
     ellipsis_width = string_width(ellipsis)
     available_width = max_width - ellipsis_width
     
+    if available_width < 0:
+        # Max width is smaller than ellipsis - just return ellipsis
+        return ellipsis
+    
     if truncate_type == 'truncate-end':
         # Truncate at end: keep start, add ellipsis
         truncated = slice_ansi(text, 0, available_width) + ellipsis
+        # Ensure ANSI codes are properly closed
+        truncated = _ensure_ansi_reset(truncated, text)
     elif truncate_type == 'truncate-middle':
         # Truncate in middle: keep start and end, ellipsis in middle
-        half_width = available_width // 2
+        # Split available width evenly, but ensure we use all available space
+        half_width = (available_width + 1) // 2  # Round up for first half
+        remaining = available_width - half_width  # Remaining for second half
+        
         start_part = slice_ansi(text, 0, half_width)
-        end_part = slice_ansi(text, text_width - half_width, text_width)
+        end_part = slice_ansi(text, text_width - remaining, text_width)
         truncated = start_part + ellipsis + end_part
+        # Ensure ANSI codes are properly closed
+        truncated = _ensure_ansi_reset(truncated, text)
     elif truncate_type == 'truncate-start':
         # Truncate at start: ellipsis, then end
         truncated = ellipsis + slice_ansi(text, text_width - available_width, text_width)
+        # Ensure ANSI codes are properly closed
+        truncated = _ensure_ansi_reset(truncated, text)
     else:
         # Default: truncate at end
         truncated = slice_ansi(text, 0, available_width) + ellipsis
+        truncated = _ensure_ansi_reset(truncated, text)
+    
+    return truncated
+
+
+def _ensure_ansi_reset(truncated: str, original: str) -> str:
+    """
+    Ensure ANSI codes are properly closed in truncated text.
+    
+    If the original text had ANSI codes, ensure the truncated version
+    has a reset code at the end if needed.
+    """
+    # Check if original had ANSI codes
+    tokens = tokenize_ansi(original)
+    has_ansi = any(token.get('type') == 'ansi' for token in tokens)
+    
+    if not has_ansi:
+        return truncated
+    
+    # Check if truncated ends with an ANSI code (should end with reset)
+    truncated_tokens = tokenize_ansi(truncated)
+    
+    # If the last token is not a reset code, add one
+    if truncated_tokens:
+        last_token = truncated_tokens[-1]
+        if last_token.get('type') == 'ansi' and last_token.get('value') != '\x1b[0m':
+            # Check if we need to add reset
+            # Look for any ANSI codes in the truncated text
+            has_ansi_in_truncated = any(
+                t.get('type') == 'ansi' and t.get('value') != '\x1b[0m'
+                for t in truncated_tokens
+            )
+            if has_ansi_in_truncated:
+                # Find the last non-reset ANSI code and ensure reset follows
+                # For simplicity, just append reset if not present
+                if not truncated.endswith('\x1b[0m'):
+                    truncated += '\x1b[0m'
+        elif last_token.get('type') != 'ansi':
+            # Last token is text - check if we need to add reset
+            # Check if there are any open ANSI codes
+            has_open_ansi = False
+            for token in reversed(truncated_tokens):
+                if token.get('type') == 'ansi':
+                    if token.get('value') == '\x1b[0m':
+                        break  # Found reset, no open codes
+                    else:
+                        has_open_ansi = True
+                        break
+            
+            if has_open_ansi:
+                truncated += '\x1b[0m'
     
     return truncated
 

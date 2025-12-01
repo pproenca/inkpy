@@ -88,3 +88,109 @@ def test_error_overview_has_aria_labels():
     overview = ErrorOverview(error)
     assert overview is not None
 
+
+def test_get_code_excerpt_includes_context_lines():
+    """Test that _get_code_excerpt includes context lines before and after"""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        for i in range(1, 11):
+            f.write(f"line {i}\n")
+        temp_path = f.name
+    
+    try:
+        excerpt = _get_code_excerpt(temp_path, 5, context_lines=2)
+        assert excerpt is not None
+        
+        # Should include lines 3, 4, 5, 6, 7 (2 before, error line, 2 after)
+        line_nums = [line_num for line_num, _ in excerpt]
+        assert 3 in line_nums
+        assert 4 in line_nums
+        assert 5 in line_nums  # Error line
+        assert 6 in line_nums
+        assert 7 in line_nums
+    finally:
+        os.unlink(temp_path)
+
+
+def test_get_code_excerpt_handles_start_of_file():
+    """Test that _get_code_excerpt handles errors at start of file"""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        f.write("line 1\n")
+        f.write("line 2\n")
+        f.write("line 3\n")
+        temp_path = f.name
+    
+    try:
+        excerpt = _get_code_excerpt(temp_path, 1, context_lines=3)
+        assert excerpt is not None
+        
+        # Should start at line 1 (can't go before)
+        line_nums = [line_num for line_num, _ in excerpt]
+        assert 1 in line_nums
+        assert min(line_nums) == 1
+    finally:
+        os.unlink(temp_path)
+
+
+def test_get_code_excerpt_handles_end_of_file():
+    """Test that _get_code_excerpt handles errors at end of file"""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        f.write("line 1\n")
+        f.write("line 2\n")
+        f.write("line 3\n")
+        temp_path = f.name
+    
+    try:
+        excerpt = _get_code_excerpt(temp_path, 3, context_lines=3)
+        assert excerpt is not None
+        
+        # Should end at line 3 (can't go after)
+        line_nums = [line_num for line_num, _ in excerpt]
+        assert 3 in line_nums
+        assert max(line_nums) == 3
+    finally:
+        os.unlink(temp_path)
+
+
+def test_get_code_excerpt_handles_nonexistent_file():
+    """Test that _get_code_excerpt returns None for nonexistent file"""
+    excerpt = _get_code_excerpt("/nonexistent/file.py", 1)
+    assert excerpt is None
+
+
+def test_get_code_excerpt_preserves_line_content():
+    """Test that _get_code_excerpt preserves line content correctly"""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        f.write("def test():\n")
+        f.write("    x = 1 + 2\n")
+        f.write("    return x\n")
+        temp_path = f.name
+    
+    try:
+        excerpt = _get_code_excerpt(temp_path, 2, context_lines=1)
+        assert excerpt is not None
+        
+        # Find line 2 in excerpt
+        line_2 = next((content for line_num, content in excerpt if line_num == 2), None)
+        assert line_2 == "    x = 1 + 2"
+    finally:
+        os.unlink(temp_path)
+
+
+def test_get_code_excerpt_strips_newlines():
+    """Test that _get_code_excerpt strips newlines from line content"""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        f.write("line 1\n")
+        f.write("line 2\n")
+        temp_path = f.name
+    
+    try:
+        excerpt = _get_code_excerpt(temp_path, 1, context_lines=0)
+        assert excerpt is not None
+        
+        # Line content should not have newline
+        for line_num, content in excerpt:
+            assert '\n' not in content
+            assert '\r' not in content
+    finally:
+        os.unlink(temp_path)
+

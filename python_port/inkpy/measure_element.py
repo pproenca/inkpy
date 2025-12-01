@@ -28,10 +28,10 @@ def measure_element(node: DOMElement) -> Dict[str, int]:
         Dictionary with 'width' and 'height' keys
     """
     if node.yoga_node:
-        layout = node.yoga_node.get_layout()
+        # Use get_computed_width/height to match TypeScript API
         return {
-            'width': int(layout.get('width', 0)),
-            'height': int(layout.get('height', 0))
+            'width': int(node.yoga_node.get_computed_width() or 0),
+            'height': int(node.yoga_node.get_computed_height() or 0)
         }
     
     return {'width': 0, 'height': 0}

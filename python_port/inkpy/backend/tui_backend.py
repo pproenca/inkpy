@@ -3,6 +3,7 @@ TUI Backend - Bridges ReactPy VDOM to DOM node system
 """
 from typing import Any, Optional, Dict, List, Callable
 from reactpy.core.layout import Layout
+import poga
 from inkpy.dom import (
     create_node, 
     create_text_node, 
@@ -362,6 +363,26 @@ class TUIBackend:
             append_child_node(parent, node)
         
         return node
+    
+    def hide_instance(self, node: DOMElement):
+        """Hide element by setting display none"""
+        if node.yoga_node:
+            layout = node.yoga_node.view.poga_layout()
+            layout.display = poga.YGDisplay.DisplayNone
+    
+    def unhide_instance(self, node: DOMElement):
+        """Unhide element by setting display flex"""
+        if node.yoga_node:
+            layout = node.yoga_node.view.poga_layout()
+            layout.display = poga.YGDisplay.Flex
+    
+    def hide_text_instance(self, node: TextNode):
+        """Hide text by setting value to empty string"""
+        set_text_node_value(node, '')
+    
+    def unhide_text_instance(self, node: TextNode, text: str):
+        """Unhide text by restoring value"""
+        set_text_node_value(node, text)
     
     async def render_loop(self, layout: Layout):
         """Async render loop for ReactPy Layout"""

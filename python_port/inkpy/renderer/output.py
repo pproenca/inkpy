@@ -6,7 +6,13 @@ Also responsible for applying transformations to each character of the output.
 """
 from typing import List, Optional, Callable, Dict, Any
 import re
-from .ansi_tokenize import slice_ansi, string_width
+from .ansi_tokenize import (
+    slice_ansi,
+    string_width,
+    tokenize_ansi,
+    styled_chars_from_tokens,
+    styled_chars_to_string,
+)
 
 # Type alias for output transformers
 OutputTransformer = Callable[[str, int], str]
@@ -97,15 +103,24 @@ class Output:
         """
         Generate final output string from all operations.
         
+        Uses styled characters for proper ANSI code and multi-column character handling.
+        
         Returns:
             Dictionary with 'output' (string) and 'height' (int)
         """
-        # Initialize 2D buffer with spaces
-        # Each cell is a character (we'll handle ANSI codes separately)
-        output: List[List[str]] = []
+        # Initialize 2D buffer with styled character objects
+        # Each cell is a StyledChar: {type: 'char', value: str, fullWidth: bool, styles: List[str]}
+        output: List[List[Optional[Dict[str, Any]]]] = []
         
         for y in range(self.height):
-            row = [' '] * self.width
+            row: List[Optional[Dict[str, Any]]] = []
+            for x in range(self.width):
+                row.append({
+                    'type': 'char',
+                    'value': ' ',
+                    'fullWidth': False,
+                    'styles': []
+                })
             output.append(row)
         
         clips: List[Dict[str, Optional[int]]] = []
@@ -198,7 +213,7 @@ class Output:
                         transformed_lines.append(transformer(line, idx))
                     lines = transformed_lines
                 
-                # Write lines to buffer
+                # Write lines to buffer using styled characters
                 for offset_y, line in enumerate(lines):
                     target_y = y + offset_y
                     if target_y >= self.height:
@@ -206,28 +221,48 @@ class Output:
                     
                     current_line = output[target_y]
                     
-                    # Write characters to buffer
-                    # Handle ANSI codes by writing them as-is
-                    # This is simplified - proper handling would parse and reapply
-                    char_idx = 0
-                    x_pos = x
+                    # Convert line to styled characters
+                    tokens = tokenize_ansi(line)
+                    characters = styled_chars_from_tokens(tokens)
                     
-                    # Simple character-by-character writing
-                    # For now, we'll just write the line directly
-                    # Proper implementation would parse ANSI codes
-                    line_chars = list(line)
-                    for char in line_chars:
-                        if x_pos >= self.width:
+                    offset_x = x
+                    
+                    for character in characters:
+                        if offset_x >= self.width:
                             break
-                        current_line[x_pos] = char
-                        x_pos += 1
+                        
+                        # Write styled character to buffer
+                        current_line[offset_x] = character
+                        
+                        # Determine printed width (multi-column characters)
+                        char_width = max(1, string_width(character['value']))
+                        
+                        # For multi-column characters, clear following cells
+                        # to avoid stray spaces/artifacts
+                        if char_width > 1:
+                            for index in range(1, char_width):
+                                if offset_x + index < self.width:
+                                    current_line[offset_x + index] = {
+                                        'type': 'char',
+                                        'value': '',
+                                        'fullWidth': False,
+                                        'styles': character['styles']
+                                    }
+                        
+                        offset_x += char_width
         
-        # Convert buffer to string
+        # Convert buffer to string using styled_chars_to_string
         generated_output = []
         for row in output:
-            # Join row and trim trailing spaces
-            line = ''.join(row).rstrip()
-            generated_output.append(line)
+            # Filter out None/undefined items (shouldn't happen, but be safe)
+            line_without_empty = [
+                item for item in row
+                if item is not None and item.get('value') is not None
+            ]
+            
+            # Convert styled characters back to string
+            line_str = styled_chars_to_string(line_without_empty)
+            generated_output.append(line_str.rstrip())
         
         return {
             'output': '\n'.join(generated_output),

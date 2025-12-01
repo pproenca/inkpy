@@ -83,3 +83,40 @@ def test_output_bounds():
     # Should not crash, but may truncate or wrap
     assert result['height'] == 3
 
+
+def test_output_preserves_ansi_codes():
+    """Test that Output preserves ANSI codes when writing styled text"""
+    output = Output(width=20, height=10)
+    red_text = "\x1b[31mRed\x1b[0m"
+    output.write(0, 0, red_text, transformers=[])
+    result = output.get()
+    
+    # ANSI codes should be preserved in output
+    assert '\x1b[31m' in result['output']
+    assert 'Red' in result['output']
+
+
+def test_output_clip_preserves_ansi_codes():
+    """Test that clipping preserves ANSI codes"""
+    output = Output(width=20, height=10)
+    output.clip(x1=2, x2=10, y1=0, y2=10)
+    red_text = "\x1b[31mHello World\x1b[0m"
+    output.write(0, 0, red_text, transformers=[])
+    output.unclip()
+    result = output.get()
+    
+    # ANSI codes should be preserved even after clipping
+    assert '\x1b[31m' in result['output']
+    assert 'Hello' in result['output'] or 'World' in result['output']
+
+
+def test_output_handles_wide_characters():
+    """Test that Output handles multi-column characters (CJK) correctly"""
+    output = Output(width=20, height=10)
+    text_with_cjk = "A中B"  # Chinese character is 2 columns wide
+    output.write(0, 0, text_with_cjk, transformers=[])
+    result = output.get()
+    
+    # Should include the Chinese character
+    assert '中' in result['output']
+

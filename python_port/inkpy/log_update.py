@@ -12,6 +12,63 @@ ERASE_LINE = "\x1b[2K"
 CURSOR_NEXT_LINE = "\x1b[1E"
 
 
+def clear_terminal() -> str:
+    """
+    Clear the entire terminal screen.
+    
+    Equivalent to ansiEscapes.clearTerminal from ansi-escapes package.
+    This clears the screen and moves cursor to top-left.
+    """
+    return "\x1b[2J\x1b[H"
+
+
+def cursor_down(count: int) -> str:
+    """Move cursor down N lines"""
+    if count <= 0:
+        return ""
+    return f"\x1b[{count}B"
+
+
+def cursor_left(count: int) -> str:
+    """Move cursor left N columns"""
+    if count <= 0:
+        return ""
+    return f"\x1b[{count}D"
+
+
+def cursor_right(count: int) -> str:
+    """Move cursor right N columns"""
+    if count <= 0:
+        return ""
+    return f"\x1b[{count}C"
+
+
+def cursor_to(x: int, y: int) -> str:
+    """
+    Move cursor to specific position (1-indexed).
+    
+    Args:
+        x: Column (1-indexed)
+        y: Row (1-indexed)
+    """
+    return f"\x1b[{y};{x}H"
+
+
+def erase_down() -> str:
+    """Erase from cursor down to end of screen"""
+    return "\x1b[J"
+
+
+def erase_up() -> str:
+    """Erase from cursor up to beginning of screen"""
+    return "\x1b[1J"
+
+
+def erase_screen() -> str:
+    """Erase entire screen (same as clear_terminal but without cursor positioning)"""
+    return "\x1b[2J"
+
+
 def erase_lines(count: int) -> str:
     """
     Generate ANSI sequence to erase N lines.

@@ -53,9 +53,10 @@ def create_node(node_name: str) -> DOMElement:
     if node_name == 'ink-text':
         def measure_func(width: float, height: float) -> Dict[str, float]:
             return measure_text_node(node, width, height)
-        # Note: YogaNode doesn't have set_measure_func yet, we'll need to add it
-        # For now, we'll store it and set it when needed
+        # Store measure function on both node and yoga node's view
         node._measure_func = measure_func
+        if node.yoga_node:
+            node.yoga_node.view._measure_func = measure_func
     
     return node
 

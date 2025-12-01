@@ -46,6 +46,16 @@ class NodeView(poga.PogaView):
         self._frame = {'x': x, 'y': y, 'width': width, 'height': height}
 
     def size_that_fits(self, width: float, height: float) -> Tuple[float, float]:
+        # Check if there's a measure function set (for text nodes)
+        if hasattr(self, '_measure_func') and self._measure_func:
+            result = self._measure_func(width, height)
+            # Convert dict to tuple if needed
+            if isinstance(result, dict):
+                return (result.get('width', 0.0), result.get('height', 0.0))
+            elif isinstance(result, tuple):
+                return result
+            else:
+                return (float(result.get('width', 0)), float(result.get('height', 0)))
         return (0, 0)
 
     def add_child(self, child: 'NodeView'):
@@ -187,3 +197,11 @@ class YogaNode:
             'width': self.view._frame['width'],
             'height': self.view._frame['height']
         }
+    
+    def get_computed_width(self) -> float:
+        """Get computed width of the node (matches TypeScript getComputedWidth)"""
+        return self.get_layout().get('width', 0.0)
+    
+    def get_computed_height(self) -> float:
+        """Get computed height of the node (matches TypeScript getComputedHeight)"""
+        return self.get_layout().get('height', 0.0)
