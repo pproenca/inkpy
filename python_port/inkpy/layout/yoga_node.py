@@ -1,4 +1,5 @@
 import poga
+import math
 from typing import List, Dict, Any, Tuple, Optional
 
 class NodeView(poga.PogaView):
@@ -6,6 +7,9 @@ class NodeView(poga.PogaView):
         self._children: List['NodeView'] = []
         self._layout = poga.PogaLayout(self)
         self._frame = {'x': 0.0, 'y': 0.0, 'width': 0.0, 'height': 0.0}
+        # Track last valid dimensions for Poga's size_that_fits calls
+        self._last_valid_width: Optional[float] = None
+        self._last_valid_height: Optional[float] = None
 
     def poga_layout(self) -> poga.PogaLayout:
         return self._layout
@@ -46,6 +50,12 @@ class NodeView(poga.PogaView):
         self._frame = {'x': x, 'y': y, 'width': width, 'height': height}
 
     def size_that_fits(self, width: float, height: float) -> Tuple[float, float]:
+        # Track last valid dimensions (Poga sometimes calls with NaN)
+        if not math.isnan(width):
+            self._last_valid_width = width
+        if not math.isnan(height):
+            self._last_valid_height = height
+        
         # Check if there's a measure function set (for text nodes)
         if hasattr(self, '_measure_func') and self._measure_func:
             result = self._measure_func(width, height)
@@ -56,7 +66,12 @@ class NodeView(poga.PogaView):
                 return result
             else:
                 return (float(result.get('width', 0)), float(result.get('height', 0)))
-        return (0, 0)
+        
+        # For non-leaf nodes (containers), return the available size to allow stretching
+        # This fixes align_items: stretch behavior in Poga
+        w = self._last_valid_width if self._last_valid_width is not None else (0.0 if math.isnan(width) else width)
+        h = self._last_valid_height if self._last_valid_height is not None else (0.0 if math.isnan(height) else height)
+        return (w, h)
 
     def add_child(self, child: 'NodeView'):
         self._children.append(child)
@@ -79,11 +94,9 @@ class YogaNode:
         self.view.poga_layout().align_items = poga.YGAlign.Stretch
         self.view.poga_layout().justify_content = poga.YGJustify.FlexStart
 
-        # Ensure flex shrink is 1 by default (standard)
-        self.view.poga_layout().flex_shrink = 1
-
-        # Ensure display is flex
-        # self.view.poga_layout().display = poga.YGDisplay.Flex
+        # NOTE: Do NOT set flex_shrink explicitly here. While Yoga's default is 1,
+        # setting it explicitly on nodes causes Poga to skip the first size_that_fits
+        # call with valid width, breaking align_items: stretch behavior.
 
     def set_style(self, style: Dict[str, Any]):
         layout = self.view.poga_layout()
@@ -168,11 +181,7 @@ class YogaNode:
         self.view.poga_layout().calculate_layout_with_size((w, h))
 
         # Apply results recursively
-        # We MUST pass preserve_origin=False to ensure x/y are updated from layout logic
         poga.PogaLayout.__apply_layout_to_view_hierarchy__(self.view, False)
-
-        # DEBUG: Traverse and print frames
-        # self._debug_print_frames(self, 0)
 
     def _debug_print_frames(self, node, depth):
         indent = "  " * depth
@@ -183,14 +192,7 @@ class YogaNode:
     def get_layout(self) -> Dict[str, float]:
         # Return layout compatible with Ink/tests
         # left, top, width, height
-
-        # If the view frame is not what we expect, we can try to pull directly from the layout node
-        # But we shouldn't need to rely on private access.
-
-        # One edge case: poga might not be updating the frame if the node is the root?
-        # But children are not roots.
-
-        # Let's just trust the frame for now, assuming calculate_layout updated it.
+        # Read from view frame, which is populated by calculate_layout
         return {
             'left': self.view._frame['x'],
             'top': self.view._frame['y'],
