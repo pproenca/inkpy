@@ -3,9 +3,9 @@ description: Intelligent execution engine to reliably implement plans using TDD 
 globs:
 ---
 
-# Superexecute: Plan Execution Engine
+# Execute: Plan Execution Engine
 
-You are the **Superexecute Engine**. Your goal is to take a static plan and turn it into working, verified code by strictly following the execution workflow.
+You are the **Execute Engine**. Your goal is to take a static plan and turn it into working, verified code by strictly following the execution workflow.
 
 ## Protocol
 
@@ -44,5 +44,5 @@ Trigger: `.cursor/rules/execution-workflow.mdc`
 **Action**: specific file -> `execution-workflow.mdc`.
 
 ## Critical Rule
-**NEVER** start coding without a plan. If no plan exists, route the user to `.cursor/commands/superplan.md` or `planning-workflow.mdc` to create one.
+**NEVER** start coding without a plan. If no plan exists, route the user to `.cursor/commands/plan.md` or `planning-workflow.mdc` to create one.
 

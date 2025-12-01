@@ -1,0 +1,3 @@
+poga>=0.1.0
+reactpy>=1.0.0
+wcwidth>=0.2.5

@@ -1,844 +1,704 @@
-# InkPy 100% Feature Parity Implementation Plan
+# InkPy 100% Parity Implementation Plan
 
-> **Goal:** Complete the remaining 15% of InkPy to achieve full feature parity with TypeScript Ink, enabling production-ready CLI applications with terminal rendering, input handling, and accessibility support.
-
-> **Tech Stack:** Python 3.9+, ReactPy, Poga (Yoga bindings), pytest
-
-> **Reference:** TypeScript Ink source at `/Users/pedroproenca/Documents/Projects/ink/src/`
-
-> **Current Status:** 85% complete (145 tests passing, 4 xfail)
-
----
-
-## Overview
-
-### Completed ✅
-- Renderer (output, colorize, borders, background, render_node)
-- Layout (yoga_node, text_node, styles)
-- Input (keypress)
-- Components (Box, Text, Static, Newline, Spacer, Transform)
-- Hooks (use_input, use_stdin, use_stdout, use_stderr, use_app, use_focus, use_focus_manager)
-- DOM (create_node, append_child, squash_text_nodes)
-
-### Remaining 🔴
-1. **log_update.py** - Terminal output management
-2. **get_max_width.py** - Max width helper
-3. **ink.py** - Complete main class
-4. **measure_element.py** - Public API function
-5. **renderer.py** - Screen reader mode
-6. **AccessibilityContext** - Screen reader context
-7. **use_is_screen_reader_enabled.py** - Screen reader hook
-8. **E2E Examples** - counter.py, interactive.py
-9. **Documentation** - Type hints, README
+> **Goal:** Achieve full feature parity between Ink (TypeScript) and InkPy (Python)
+>
+> **Tech Stack:** Python 3.9+, ReactPy, Poga (Yoga layout), pytest
+>
+> **Source Reference:** `/Users/pedroproenca/Documents/Projects/inkpy/src/`
+>
+> **Target:** `/Users/pedroproenca/Documents/Projects/inkpy/python_port/inkpy/`
+>
+> **Skills Reference:** See `@.cursor/skills/test-driven-development.md` for TDD protocol
+>
+> **Last Updated:** 2025-12-01 (Deep analysis refresh)
 
 ---
 
-## Phase 6: Infrastructure Completion
+## Executive Summary
 
-### Task 6.1: Log Update Module (CRITICAL)
-**Files:** `python_port/inkpy/log_update.py`, `python_port/tests/test_log_update.py`
+This deep analysis covers every file in the Ink TypeScript source and compares it with the InkPy Python port. The port has solid foundations (Phases 3-5) and significant progress on Phase 6-7, but critical gaps remain for 100% parity.
 
-**Purpose:** Manages terminal output with cursor control, line erasing, and incremental rendering.
+### Overall Parity Status: ~75% (up from 65%)
 
-**Step 1:** Write failing tests
-```python
-# test_log_update.py
-import io
-import pytest
-from inkpy.log_update import create_log_update
-
-def test_log_update_writes_output():
-    """Test basic output writing"""
-    stream = io.StringIO()
-    log = create_log_update(stream)
-    log("Hello, World!")
-    output = stream.getvalue()
-    assert "Hello, World!" in output
-
-def test_log_update_erases_previous():
-    """Test that previous output is erased before new output"""
-    stream = io.StringIO()
-    log = create_log_update(stream)
-    log("First")
-    log("Second")
-    output = stream.getvalue()
-    # Should contain erase sequence before "Second"
-    assert "\x1b[" in output  # ANSI escape
-
-def test_log_update_clear():
-    """Test clearing output"""
-    stream = io.StringIO()
-    log = create_log_update(stream)
-    log("Content")
-    log.clear()
-    output = stream.getvalue()
-    assert "\x1b[" in output  # Erase sequence
-
-def test_log_update_done():
-    """Test done() restores cursor"""
-    stream = io.StringIO()
-    log = create_log_update(stream, show_cursor=False)
-    log("Content")
-    log.done()
-    output = stream.getvalue()
-    # Should show cursor at end
-    assert "\x1b[?25h" in output  # Show cursor sequence
-
-def test_log_update_hides_cursor():
-    """Test cursor is hidden during rendering"""
-    stream = io.StringIO()
-    log = create_log_update(stream, show_cursor=False)
-    log("Content")
-    output = stream.getvalue()
-    assert "\x1b[?25l" in output  # Hide cursor sequence
-
-def test_incremental_rendering():
-    """Test incremental mode only updates changed lines"""
-    stream = io.StringIO()
-    log = create_log_update(stream, incremental=True)
-    log("Line 1\nLine 2\nLine 3")
-    log("Line 1\nChanged\nLine 3")
-    # Incremental should skip unchanged lines
-
-def test_log_update_sync():
-    """Test sync() updates state without writing"""
-    stream = io.StringIO()
-    log = create_log_update(stream)
-    log.sync("Synced content")
-    output = stream.getvalue()
-    assert output == ""  # Nothing written
-```
-
-**Step 2:** Implement log_update.py
-```python
-"""
-Log Update - Terminal output management with cursor control and incremental rendering.
-
-Ported from: src/log-update.ts
-"""
-from typing import TextIO, Optional, Callable, List
-
-# ANSI escape sequences
-HIDE_CURSOR = "\x1b[?25l"
-SHOW_CURSOR = "\x1b[?25h"
-ERASE_LINE = "\x1b[2K"
-CURSOR_UP = "\x1b[{n}A"
-CURSOR_NEXT_LINE = "\x1b[1E"
-
-def erase_lines(count: int) -> str:
-    """Generate ANSI sequence to erase N lines"""
-    if count <= 0:
-        return ""
-    # Move up and erase each line
-    result = ""
-    for _ in range(count):
-        result += ERASE_LINE + CURSOR_UP.format(n=1)
-    result += "\r"  # Return to start of line
-    return result
-
-class LogUpdate:
-    """Manages terminal output with support for re-rendering"""
-
-    def __init__(
-        self,
-        stream: TextIO,
-        show_cursor: bool = True,
-        incremental: bool = False
-    ):
-        self.stream = stream
-        self.show_cursor = show_cursor
-        self.incremental = incremental
-        self._previous_line_count = 0
-        self._previous_output = ""
-        self._previous_lines: List[str] = []
-        self._has_hidden_cursor = False
-
-    def __call__(self, text: str) -> None:
-        """Write output, erasing previous content"""
-        if self.incremental:
-            self._render_incremental(text)
-        else:
-            self._render_standard(text)
-
-    def _render_standard(self, text: str) -> None:
-        if not self.show_cursor and not self._has_hidden_cursor:
-            self.stream.write(HIDE_CURSOR)
-            self._has_hidden_cursor = True
-
-        output = text + "\n"
-        if output == self._previous_output:
-            return
-
-        self._previous_output = output
-        self.stream.write(erase_lines(self._previous_line_count) + output)
-        self._previous_line_count = output.count("\n")
-        self.stream.flush()
-
-    def _render_incremental(self, text: str) -> None:
-        if not self.show_cursor and not self._has_hidden_cursor:
-            self.stream.write(HIDE_CURSOR)
-            self._has_hidden_cursor = True
-
-        output = text + "\n"
-        if output == self._previous_output:
-            return
-
-        previous_count = len(self._previous_lines)
-        next_lines = output.split("\n")
-        next_count = len(next_lines)
-        visible_count = next_count - 1
-
-        if output == "\n" or len(self._previous_output) == 0:
-            self.stream.write(erase_lines(previous_count) + output)
-            self._previous_output = output
-            self._previous_lines = next_lines
-            self.stream.flush()
-            return
-
-        buffer = []
-
-        # Handle line count changes
-        if next_count < previous_count:
-            buffer.append(erase_lines(previous_count - next_count + 1))
-            buffer.append(CURSOR_UP.format(n=visible_count))
-        else:
-            buffer.append(CURSOR_UP.format(n=previous_count - 1))
-
-        # Only write changed lines
-        for i in range(visible_count):
-            if i < len(self._previous_lines) and next_lines[i] == self._previous_lines[i]:
-                buffer.append(CURSOR_NEXT_LINE)
-                continue
-            buffer.append(ERASE_LINE + next_lines[i] + "\n")
-
-        self.stream.write("".join(buffer))
-        self._previous_output = output
-        self._previous_lines = next_lines
-        self.stream.flush()
-
-    def clear(self) -> None:
-        """Erase all output"""
-        self.stream.write(erase_lines(self._previous_line_count))
-        self._previous_output = ""
-        self._previous_line_count = 0
-        self._previous_lines = []
-        self.stream.flush()
-
-    def done(self) -> None:
-        """Cleanup - reset state and show cursor"""
-        self._previous_output = ""
-        self._previous_line_count = 0
-        self._previous_lines = []
-
-        if not self.show_cursor and self._has_hidden_cursor:
-            self.stream.write(SHOW_CURSOR)
-            self._has_hidden_cursor = False
-            self.stream.flush()
-
-    def sync(self, text: str) -> None:
-        """Update internal state without writing to stream"""
-        output = text + "\n"
-        self._previous_output = output
-        self._previous_line_count = output.count("\n")
-        self._previous_lines = output.split("\n")
-
-def create_log_update(
-    stream: TextIO,
-    show_cursor: bool = True,
-    incremental: bool = False
-) -> LogUpdate:
-    """Factory function to create LogUpdate instance"""
-    return LogUpdate(stream, show_cursor, incremental)
-```
-
-**Step 3:** Verify tests pass
-
-**Verification:** `cd python_port && pytest tests/test_log_update.py -v`
+| Category | Ink Files | InkPy Status | Parity | Notes |
+|----------|-----------|--------------|--------|-------|
+| **Core System** (`ink.tsx`, `render.ts`) | 2 files | Implemented | 85% | Missing React reconciler equivalent |
+| **Reconciler Bridge** (`reconciler.ts`) | 1 file | `TUIBackend` | 70% | Missing proper VDOM→DOM sync |
+| **DOM System** (`dom.ts`) | 1 file | Implemented | 85% | Missing measure func application |
+| **Rendering Pipeline** | 7 files | Implemented | 80% | Missing ANSI tokenization |
+| **Layout/Styles** (`styles.ts`) | 4 files | Implemented | 90% | Minor edge handling |
+| **Components** | 8 files | 7 implemented | 85% | ErrorOverview needs enhancement |
+| **Contexts** | 7 files | 7 implemented | 95% | All present |
+| **Hooks** | 8 files | 8 implemented | 85% | useInput needs refinement |
+| **Input System** (`parse-keypress.ts`) | 1 file | Implemented | 95% | |
+| **Terminal Management** (`log-update.ts`) | 1 file | Implemented | 90% | |
 
 ---
 
-### Task 6.2: Get Max Width Helper
-**Files:** `python_port/inkpy/get_max_width.py`, `python_port/tests/test_get_max_width.py`
+## Detailed File-by-File Gap Analysis
 
-**Purpose:** Calculate maximum content width accounting for padding and borders.
+### 1. Core System
 
-**Step 1:** Write failing tests
+#### `src/ink.tsx` → `inkpy/ink.py` (85% ✅)
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| Options: stdout, stdin, stderr | ✅ | ✅ | Done |
+| debug mode | ✅ | ✅ | Done |
+| exitOnCtrlC | ✅ | ✅ | Done |
+| patchConsole | ✅ | ✅ | Done |
+| maxFps throttling | ✅ | ✅ | Done |
+| incrementalRendering | ✅ | ✅ | Done |
+| isScreenReaderEnabled + env var | ✅ | ✅ | Done |
+| onRender callback with metrics | ✅ | ✅ | Done |
+| Terminal resize handler (SIGWINCH) | ✅ | ✅ | Done |
+| CI detection | ✅ | ✅ | Done |
+| Throttled rendering | ✅ | ✅ | Done |
+| Signal exit handling | ✅ | ✅ | Done |
+| Cursor control | ✅ | ✅ | In LogUpdate |
+| Static output accumulation | ✅ | ✅ | Done |
+| Output height tracking | ✅ | ✅ | Done |
+| Screen reader output with wrapAnsi | ✅ | ⚠️ | Needs proper wrapAnsi |
+| **React reconciler container** | ✅ | ❌ | **See TUIBackend** |
+
+**Current State:** The `Ink` class is well-implemented with all options and rendering callbacks. The main gap is that it doesn't have a true React reconciler equivalent - it uses `TUIBackend` and `Layout` from ReactPy.
+
+#### `src/reconciler.ts` → `inkpy/backend/tui_backend.py` (70%)
+
+**This is the key architectural difference.** Ink uses a custom React reconciler with `react-reconciler` package. InkPy uses `TUIBackend` to bridge ReactPy's VDOM to the Ink DOM system.
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| `createContainer()` | ✅ | N/A | ReactPy Layout handles |
+| `updateContainerSync()` | ✅ | N/A | ReactPy Layout handles |
+| `createInstance()` | ✅ | ✅ | Done |
+| `createTextInstance()` | ✅ | ✅ | Done |
+| Host context (`isInsideText`) | ✅ | ✅ | Done |
+| Text validation (text inside Text) | ✅ | ✅ | Done |
+| `commitUpdate()` with diffing | ✅ | ✅ | Done |
+| `commitTextUpdate()` | ✅ | ✅ | Done |
+| Static element detection | ✅ | ✅ | Done |
+| `resetAfterCommit()` callbacks | ✅ | ✅ | Done |
+| Yoga node cleanup | ✅ | ✅ | Done |
+| `hideInstance/unhideInstance` | ✅ | ❌ | Missing |
+| `hideTextInstance/unhideTextInstance` | ✅ | ❌ | Missing |
+| **Render loop integration** | ✅ | ⚠️ | Needs async loop |
+
+**Remaining Work:**
+1. `hideInstance()`/`unhideInstance()` - Use `yogaNode.setDisplay(DISPLAY_NONE/FLEX)`
+2. `hideTextInstance()`/`unhideTextInstance()` - Set text value to ''
+3. Proper async render loop integration with ReactPy
+
+#### `src/render.ts` → `inkpy/render.py` (95% ✅)
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| Instance singleton per stdout | ✅ | ✅ | Done |
+| Full options passthrough | ✅ | ✅ | Done |
+| Instance cleanup method | ✅ | ✅ | Done |
+| `Instance` class with rerender/unmount/clear | ✅ | ✅ | Done |
+
+---
+
+### 2. DOM System
+
+#### `src/dom.ts` → `inkpy/dom.py` (85% ✅)
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| DOMNode base type | ✅ | ✅ | Done |
+| DOMElement type | ✅ | ✅ | Done |
+| TextNode type | ✅ | ✅ | Done |
+| createNode factory | ✅ | ✅ | Done |
+| createTextNode factory | ✅ | ✅ | Done |
+| appendChildNode | ✅ | ✅ | Done |
+| insertBeforeNode | ✅ | ✅ | Done |
+| removeChildNode | ✅ | ✅ | Done |
+| setAttribute | ✅ | ✅ | Done |
+| setStyle | ✅ | ✅ | Done |
+| squashTextNodes | ✅ | ✅ | Done |
+| internal_accessibility attribute | ✅ | ✅ | Done |
+| internal_transform function | ✅ | ✅ | Done |
+| onComputeLayout callback | ✅ | ✅ | Done |
+| onRender callback | ✅ | ✅ | Done |
+| onImmediateRender callback | ✅ | ✅ | Done |
+| isStaticDirty tracking | ✅ | ✅ | Done |
+| staticNode reference | ✅ | ✅ | Done |
+| findClosestYogaNode | ✅ | ✅ | Done |
+| markNodeAsDirty | ✅ | ✅ | Done |
+| **YogaNode.setMeasureFunc for ink-text** | ✅ | ⚠️ | Stored but not set on Poga |
+| **Yoga node cleanup (freeRecursive)** | ✅ | ⚠️ | Partial |
+
+**Remaining Work:**
+1. Ensure `setMeasureFunc` is properly called on Poga nodes for text measurement
+2. Verify `freeRecursive` equivalent in Poga
+
+---
+
+### 3. Rendering Pipeline
+
+#### `src/renderer.ts` → `inkpy/renderer/renderer.py` (85%)
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| Screen reader output mode branch | ✅ | ⚠️ | Has placeholder |
+| Static node detection and separate rendering | ✅ | ✅ | Done |
+| Output height calculation | ✅ | ✅ | Done |
+
+#### `src/render-node-to-output.ts` → `inkpy/renderer/render_node.py` (80%)
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| renderNodeToOutput | ✅ | ✅ | Done |
+| **renderNodeToScreenReaderOutput** | ✅ | ⚠️ | Has `screen_reader.py` |
+| applyPaddingToText (indentString) | ✅ | ⚠️ | Basic version |
+| Proper transform function signature | ✅ | ✅ | Done |
+| Skip static elements option | ✅ | ✅ | Done |
+| ARIA role/state output | ✅ | ⚠️ | Partial |
+| widest-line for width calculation | ✅ | ✅ | Using `measure_text` |
+
+**Remaining Work:** Enhance screen reader output with proper ARIA annotations
+
+#### `src/output.ts` → `inkpy/renderer/output.py` (75%)
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| Output class with operations | ✅ | ✅ | Done |
+| write method | ✅ | ✅ | Done |
+| clip/unclip methods | ✅ | ✅ | Done |
+| get() with string generation | ✅ | ⚠️ | Basic |
+| **@alcalzone/ansi-tokenize equivalent** | ✅ | ⚠️ | Has `ansi_tokenize.py` |
+| styledCharsFromTokens | ✅ | ⚠️ | Partial |
+| styledCharsToString | ✅ | ⚠️ | Partial |
+| Proper ANSI preservation during clipping | ✅ | ❌ | **CRITICAL** |
+| Multi-column character handling (CJK) | ✅ | ⚠️ | Using `wcwidth` |
+
+**This is the most critical remaining gap.** The TypeScript version uses `@alcalzone/ansi-tokenize` for:
+1. Parsing ANSI-styled text into tokens with style preservation
+2. Clipping text while maintaining ANSI codes
+3. Handling multi-column characters correctly
+
+#### Other Renderer Files
+
+| File | InkPy | Status |
+|------|-------|--------|
+| `render-border.ts` → `borders.py` | ✅ | 95% |
+| `render-background.ts` → `background.py` | ✅ | 100% |
+| `colorize.ts` → `colorize.py` | ✅ | 100% |
+| `squash-text-nodes.ts` → in `dom.py` | ✅ | 100% |
+
+---
+
+### 4. Layout System
+
+#### `src/styles.ts` → `inkpy/layout/styles.py` (90% ✅)
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| Position styles | ✅ | ✅ | Done |
+| Margin styles (all edges) | ✅ | ✅ | Done |
+| Padding styles (all edges) | ✅ | ✅ | Done |
+| Flex styles (grow, shrink, direction, wrap) | ✅ | ✅ | Done |
+| Flex basis (number, percent, auto) | ✅ | ✅ | Done |
+| Align items/self | ✅ | ✅ | Done |
+| Justify content | ✅ | ✅ | Done |
+| Dimension styles (width, height, min*) | ✅ | ✅ | Done |
+| Display styles | ✅ | ✅ | Done |
+| Border styles | ✅ | ✅ | Done |
+| Gap styles (gap, rowGap, columnGap) | ✅ | ✅ | Done |
+
+#### Other Layout Files
+
+| File | InkPy | Status |
+|------|-------|--------|
+| `measure-text.ts` → `measure_text.py` | ✅ | 95% |
+| `wrap-text.ts` → `wrap_text.py` | ✅ | 85% (needs truncate) |
+| `get-max-width.ts` → `get_max_width.py` | ✅ | 100% |
+
+---
+
+### 5. Components
+
+#### `src/components/App.tsx` → `inkpy/components/app.py` (85% ✅)
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| Context providers | ✅ | ✅ | Done |
+| **Error boundary (getDerivedStateFromError)** | ✅ | ⚠️ | Using try/except |
+| **componentDidCatch** | ✅ | ⚠️ | Using try/except |
+| Cursor hide/show on mount/unmount | ✅ | ⚠️ | In LogUpdate |
+| **Raw mode reference counting** | ✅ | ✅ | Done |
+| **Stdin event emitter (EventEmitter)** | ✅ | ✅ | **Done** |
+| handleInput (Tab, Shift+Tab, Escape, Ctrl+C) | ✅ | ✅ | Done |
+| handleReadable (stdin.read() loop) | ✅ | ✅ | **Done** (background thread) |
+| Focus navigation cycle (wrap-around) | ✅ | ✅ | Done |
+| isRawModeSupported check | ✅ | ✅ | Done |
+| **handleSetRawMode with error messages** | ✅ | ✅ | Done |
+
+**Great progress!** The App component now has:
+- ✅ EventEmitter for input distribution
+- ✅ Background thread for input reading
+- ✅ Raw mode reference counting
+- ✅ Full focus management
+
+#### `src/components/Box.tsx` → `inkpy/components/box.py` (90% ✅)
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| Style merging with defaults | ✅ | ✅ | Done |
+| ARIA props | ✅ | ✅ | Done |
+| internal_accessibility attribute | ✅ | ✅ | Done |
+| Screen reader mode (show aria-label) | ✅ | ⚠️ | Needs context |
+| BackgroundContext Provider | ✅ | ✅ | Done |
+
+#### `src/components/Text.tsx` → `inkpy/components/text.py` (85%)
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| Color props (color, backgroundColor) | ✅ | ✅ | Done |
+| Style props (bold, italic, etc.) | ✅ | ✅ | Done |
+| useContext(accessibilityContext) | ✅ | ⚠️ | Needs implementation |
+| useContext(backgroundContext) | ✅ | ✅ | Done |
+| ARIA props | ✅ | ⚠️ | Partial |
+| internal_transform with chalk | ✅ | ✅ | Using colorize |
+| Screen reader mode | ✅ | ⚠️ | Partial |
+
+#### Other Components
+
+| Component | InkPy | Status |
+|-----------|-------|--------|
+| `Static.tsx` → `static.py` | ✅ | 90% |
+| `Transform.tsx` → `transform.py` | ✅ | 90% (missing accessibilityLabel) |
+| `Newline.tsx` → `newline.py` | ✅ | 100% |
+| `Spacer.tsx` → `spacer.py` | ✅ | 100% |
+| `ErrorOverview.tsx` → `error_overview.py` | ⚠️ | 60% (needs code excerpt) |
+
+---
+
+### 6. Contexts (95% ✅)
+
+| Context | InkPy | Status |
+|---------|-------|--------|
+| `AccessibilityContext.ts` → `accessibility_context.py` | ✅ | 100% |
+| `BackgroundContext.ts` → `background_context.py` | ✅ | 100% |
+| `AppContext.ts` → `app_context.py` | ✅ | 100% |
+| `FocusContext.ts` → `focus_context.py` | ✅ | 100% |
+| `StdinContext.ts` → `stdin_context.py` | ✅ | 100% |
+| `StdoutContext.ts` → `stdout_context.py` | ✅ | 100% |
+| `StderrContext.ts` → `stderr_context.py` | ✅ | 100% |
+
+---
+
+### 7. Hooks (85% ✅)
+
+#### `src/hooks/use-input.ts` → `inkpy/hooks/use_input.py` (85%)
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| Key type definition | ✅ | ✅ | Done |
+| isActive option | ✅ | ✅ | Done |
+| useEffect for raw mode setup/teardown | ✅ | ✅ | Done |
+| useEffect for event listener | ✅ | ✅ | Done |
+| **internal_eventEmitter subscription** | ✅ | ✅ | **Done** |
+| **reconciler.batchedUpdates** | ✅ | ❌ | Not available in ReactPy |
+| Shift key detection from uppercase | ✅ | ✅ | Done |
+| Meta key stripping from input | ✅ | ✅ | Done |
+| Ctrl+C handling based on exitOnCtrlC | ✅ | ✅ | Done |
+
+#### `src/hooks/use-focus.ts` → `inkpy/hooks/use_focus.py` (85%)
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| Random ID generation | ✅ | ✅ | Done |
+| useEffect for add/remove | ✅ | ✅ | Done |
+| useEffect for activate/deactivate | ✅ | ✅ | Done |
+| Raw mode setup/teardown | ✅ | ✅ | Done |
+| isRawModeSupported check | ✅ | ✅ | Done |
+
+#### Other Hooks
+
+| Hook | InkPy | Status |
+|------|-------|--------|
+| `use-app.ts` → `use_app.py` | ✅ | 100% |
+| `use-stdin.ts` → `use_stdin.py` | ✅ | 100% |
+| `use-stdout.ts` → `use_stdout.py` | ✅ | 100% |
+| `use-stderr.ts` → `use_stderr.py` | ✅ | 100% |
+| `use-focus-manager.ts` → `use_focus_manager.py` | ✅ | 100% |
+| `use-is-screen-reader-enabled.ts` → `use_is_screen_reader_enabled.py` | ✅ | 100% |
+
+---
+
+### 8. Input System (95% ✅)
+
+#### `src/parse-keypress.ts` → `inkpy/input/keypress.py`
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| Key name mapping | ✅ | ✅ | Done |
+| Ctrl key detection | ✅ | ✅ | Done |
+| Shift key detection | ✅ | ✅ | Done |
+| Meta key detection | ✅ | ✅ | Done |
+| Function keys | ✅ | ✅ | Done |
+| Arrow keys | ✅ | ✅ | Done |
+| All rxvt modifier codes | ✅ | ✅ | Done |
+
+#### EventEmitter (100% ✅)
+
+`inkpy/input/event_emitter.py` - Fully implemented!
+
+---
+
+### 9. Terminal Management (90% ✅)
+
+#### `src/log-update.ts` → `inkpy/log_update.py`
+
+| Feature | Ink (TS) | InkPy | Status |
+|---------|----------|-------|--------|
+| Standard render mode | ✅ | ✅ | Done |
+| Incremental render mode | ✅ | ✅ | Done |
+| clear() method | ✅ | ✅ | Done |
+| done() method | ✅ | ✅ | Done |
+| sync() method | ✅ | ✅ | Done |
+| Cursor hide/show | ✅ | ✅ | Done |
+| **ansiEscapes.clearTerminal** | ✅ | ⚠️ | Basic implementation |
+
+---
+
+### 10. Public API Exports
+
+#### `src/index.ts` → `inkpy/__init__.py`
+
+| Export | InkPy | Status |
+|--------|-------|--------|
+| render | ✅ | Done |
+| Box | ✅ | Done |
+| Text | ✅ | Done |
+| Static | ✅ | Done |
+| Transform | ✅ | Done |
+| Newline | ✅ | Done |
+| Spacer | ✅ | Done |
+| useInput | ✅ | Done |
+| useApp | ✅ | Done |
+| useStdin | ✅ | Done |
+| useStdout | ✅ | Done |
+| useStderr | ✅ | Done |
+| useFocus | ✅ | Done |
+| useFocusManager | ✅ | Done |
+| useIsScreenReaderEnabled | ✅ | Done |
+| measureElement | ⚠️ | Placeholder |
+| DOMElement type | ✅ | Done |
+
+---
+
+## Remaining Implementation Tasks
+
+### Phase A: Critical Rendering Gaps (Must Have)
+
+#### Task A.1: ANSI Tokenizer Enhancement
+**Priority:** CRITICAL
+**Effort:** 4-6 hours
+**Why:** Without proper ANSI tokenization, clipping and multi-column characters won't work correctly.
+
+**Files:**
+- Modify: `inkpy/renderer/ansi_tokenize.py`
+- Modify: `inkpy/renderer/output.py`
+- Test: `tests/test_ansi_tokenize.py`
+
+**Implementation:**
 ```python
-# test_get_max_width.py
-from inkpy.get_max_width import get_max_width
-from inkpy.layout.yoga_node import YogaNode
+# ansi_tokenize.py needs to:
+# 1. Parse ANSI escape sequences into styled characters
+# 2. Preserve styles when slicing/clipping
+# 3. Handle multi-column (CJK) characters with wcwidth
 
-def test_get_max_width_simple():
-    """Test max width without padding/border"""
-    node = YogaNode()
-    node.set_style({'width': 100})
-    node.calculate_layout(width=100)
-    assert get_max_width(node) == 100
+from dataclasses import dataclass
+from typing import List
+import wcwidth
 
-def test_get_max_width_with_padding():
-    """Test max width with padding"""
-    node = YogaNode()
-    node.set_style({'width': 100, 'paddingLeft': 10, 'paddingRight': 10})
-    node.calculate_layout(width=100)
-    assert get_max_width(node) == 80  # 100 - 10 - 10
+@dataclass
+class StyledChar:
+    type: str  # 'char'
+    value: str
+    full_width: bool
+    styles: List[str]
 
-def test_get_max_width_with_border():
-    """Test max width with border"""
-    node = YogaNode()
-    node.set_style({'width': 100, 'borderLeftWidth': 1, 'borderRightWidth': 1})
-    node.calculate_layout(width=100)
-    assert get_max_width(node) == 98  # 100 - 1 - 1
+def tokenize(text: str) -> List[dict]:
+    """Tokenize text preserving ANSI escape sequences"""
+    # Implementation to parse ANSI codes
+    pass
+
+def styled_chars_from_tokens(tokens: List[dict]) -> List[StyledChar]:
+    """Convert tokens to styled characters"""
+    pass
+
+def styled_chars_to_string(chars: List[StyledChar]) -> str:
+    """Convert styled characters back to string with ANSI codes"""
+    pass
 ```
 
-**Step 2:** Implement get_max_width.py
+---
+
+#### Task A.2: Render Pipeline Integration Test
+**Priority:** CRITICAL
+**Effort:** 2-3 hours
+**Why:** Verify the full render pipeline works end-to-end.
+
+**Files:**
+- Create: `tests/test_render_integration.py`
+
+**Test Cases:**
+1. Simple text rendering
+2. Nested Box/Text components
+3. State updates trigger re-render
+4. Focus navigation works
+5. Static component output
+
+---
+
+#### Task A.3: Text Wrapping with Truncation
+**Priority:** HIGH
+**Effort:** 2 hours
+**Why:** `cli-truncate` equivalent for truncate-start/middle/end modes.
+
+**Files:**
+- Modify: `inkpy/wrap_text.py`
+- Test: `tests/test_wrap_text.py`
+
+**Implementation:**
 ```python
-"""
-Get Max Width - Calculate maximum content width for a Yoga node.
-
-Ported from: src/get-max-width.ts
-"""
-from inkpy.layout.yoga_node import YogaNode
-
-def get_max_width(yoga_node: YogaNode) -> float:
-    """
-    Calculate the maximum content width for a Yoga node,
-    accounting for padding and borders.
+def truncate_text(text: str, max_width: int, position: str = 'end') -> str:
+    """Truncate text with ellipsis at specified position.
 
     Args:
-        yoga_node: The Yoga node to calculate width for
-
-    Returns:
-        Maximum content width in pixels/characters
+        text: Text to truncate
+        max_width: Maximum width
+        position: 'start', 'middle', or 'end'
     """
-    layout = yoga_node.get_layout()
-    width = layout.get('width', 0)
-
-    # Get computed padding
-    padding_left = yoga_node.view.poga_layout().computed_padding_left()
-    padding_right = yoga_node.view.poga_layout().computed_padding_right()
-
-    # Get computed border
-    border_left = yoga_node.view.poga_layout().computed_border_left()
-    border_right = yoga_node.view.poga_layout().computed_border_right()
-
-    return width - padding_left - padding_right - border_left - border_right
+    if position == 'start':
+        # ...beginning of text
+        pass
+    elif position == 'middle':
+        # start...end
+        pass
+    else:  # end
+        # text...
+        pass
 ```
-
-**Step 3:** Verify tests pass
-
-**Verification:** `cd python_port && pytest tests/test_get_max_width.py -v`
 
 ---
 
-### Task 6.3: Complete Ink Class
-**Files:** `python_port/inkpy/ink.py`, `python_port/tests/test_ink.py`
+### Phase B: Component Refinements (Should Have)
 
-**Purpose:** Complete the main Ink orchestrator with all missing features.
+#### Task B.1: Text Component Screen Reader Support
+**Effort:** 1-2 hours
 
-**Step 1:** Write additional failing tests
-```python
-# Additional tests for test_ink.py
+**Files:**
+- Modify: `inkpy/components/text.py`
 
-def test_ink_terminal_resize():
-    """Test that Ink handles terminal resize"""
-    stdout = MockStdout(columns=80)
-    ink = Ink(stdout=stdout, stdin=MockStdin(), stderr=MockStderr())
-    ink.render(MockComponent())
-
-    # Simulate resize
-    stdout.columns = 120
-    ink.resized()
-
-    # Layout should recalculate
-    assert ink.last_terminal_width == 120
-
-def test_ink_throttled_rendering():
-    """Test render throttling respects max_fps"""
-    import time
-    stdout = MockStdout()
-    ink = Ink(stdout=stdout, stdin=MockStdin(), stderr=MockStderr(), max_fps=10)
-
-    render_count = [0]
-    original_on_render = ink.on_render
-    def counting_render():
-        render_count[0] += 1
-        original_on_render()
-    ink.on_render = counting_render
-
-    # Trigger multiple rapid renders
-    for _ in range(5):
-        ink.root_node.on_render()
-
-    # Due to throttling, not all should execute immediately
-    # (This depends on throttle implementation)
-
-def test_ink_ci_detection():
-    """Test CI environment detection"""
-    import os
-    original_ci = os.environ.get('CI')
-    os.environ['CI'] = 'true'
-    try:
-        stdout = MockStdout()
-        ink = Ink(stdout=stdout, stdin=MockStdin(), stderr=MockStderr())
-        assert ink.is_in_ci == True
-    finally:
-        if original_ci:
-            os.environ['CI'] = original_ci
-        else:
-            os.environ.pop('CI', None)
-
-def test_ink_screen_reader_mode():
-    """Test screen reader rendering mode"""
-    stdout = MockStdout()
-    ink = Ink(
-        stdout=stdout,
-        stdin=MockStdin(),
-        stderr=MockStderr(),
-        is_screen_reader_enabled=True
-    )
-    # Screen reader mode should use different renderer
-    assert ink.is_screen_reader_enabled == True
-```
-
-**Step 2:** Enhance ink.py implementation
-
-Key additions:
-- Terminal resize signal handling (SIGWINCH on Unix)
-- Render throttling with configurable max_fps
-- CI environment detection
-- Screen reader mode support
-- Console patching
-- Signal exit handling (SIGTERM, SIGINT)
-
-**Step 3:** Verify all ink tests pass
-
-**Verification:** `cd python_port && pytest tests/test_ink.py -v`
+**Add:**
+- `use_context(accessibility_context)` for `isScreenReaderEnabled`
+- Show `aria-label` instead of children when screen reader enabled
+- Return `None` when `aria-hidden=True` and screen reader enabled
 
 ---
 
-### Task 6.4: Measure Element Function
-**Files:** `python_port/inkpy/measure_element.py`, `python_port/tests/test_measure_element.py`
+#### Task B.2: ErrorOverview with Code Excerpt
+**Effort:** 2-3 hours
 
-**Purpose:** Public API to measure DOM element dimensions after layout.
+**Files:**
+- Modify: `inkpy/components/error_overview.py`
 
-**Step 1:** Write failing tests
+**Add:**
 ```python
-# test_measure_element.py
-from inkpy.measure_element import measure_element
-from inkpy.dom import create_node
+import linecache
+import traceback
 
-def test_measure_element_basic():
-    """Test measuring element dimensions"""
-    node = create_node('ink-box')
-    node.yoga_node.set_style({'width': 50, 'height': 10})
-    node.yoga_node.calculate_layout(width=50)
+def get_code_excerpt(filepath: str, line: int, context: int = 3) -> List[dict]:
+    """Get code excerpt around error line.
 
-    result = measure_element(node)
-
-    assert result['width'] == 50
-    assert result['height'] == 10
-
-def test_measure_element_no_yoga():
-    """Test measuring element without yoga node"""
-    node = create_node('ink-virtual-text')  # No yoga node
-    result = measure_element(node)
-
-    assert result['width'] == 0
-    assert result['height'] == 0
-```
-
-**Step 2:** Implement measure_element.py
-```python
-"""
-Measure Element - Get computed dimensions of a DOM element.
-
-Ported from: src/measure-element.ts
-"""
-from typing import TypedDict
-from inkpy.dom import DOMElement
-
-class ElementDimensions(TypedDict):
-    width: float
-    height: float
-
-def measure_element(node: DOMElement) -> ElementDimensions:
+    Returns list of: [{'line': int, 'value': str}, ...]
     """
-    Measure the dimensions of a DOM element after layout calculation.
-
-    Args:
-        node: The DOM element to measure
-
-    Returns:
-        Dict with 'width' and 'height' keys
-    """
-    if node.yoga_node is None:
-        return {'width': 0, 'height': 0}
-
-    layout = node.yoga_node.get_layout()
-    return {
-        'width': layout.get('width', 0),
-        'height': layout.get('height', 0),
-    }
-```
-
-**Step 3:** Add to public API in `__init__.py`
-
-**Verification:** `cd python_port && pytest tests/test_measure_element.py -v`
-
----
-
-### Task 6.5: Renderer Screen Reader Mode
-**Files:** `python_port/inkpy/renderer/renderer.py`, `python_port/tests/test_renderer.py`
-
-**Purpose:** Add screen reader output mode that generates accessible text output.
-
-**Step 1:** Write failing tests
-```python
-# Additional tests for test_renderer.py
-
-def test_render_screen_reader_text():
-    """Test screen reader output for text nodes"""
-    from inkpy.renderer.renderer import render, render_for_screen_reader
-    from inkpy.dom import create_node, create_text_node, append_child_node
-
-    root = create_node('ink-root')
-    text = create_node('ink-text')
-    text_content = create_text_node("Hello World")
-    append_child_node(text, text_content)
-    append_child_node(root, text)
-
-    root.yoga_node.calculate_layout(width=80)
-
-    output = render_for_screen_reader(root)
-    assert output == "Hello World"
-
-def test_render_screen_reader_box_column():
-    """Test screen reader output joins column items with newlines"""
-    root = create_node('ink-root')
-    root.style['flexDirection'] = 'column'
-
-    text1 = create_node('ink-text')
-    append_child_node(text1, create_text_node("Line 1"))
-    text2 = create_node('ink-text')
-    append_child_node(text2, create_text_node("Line 2"))
-
-    append_child_node(root, text1)
-    append_child_node(root, text2)
-
-    root.yoga_node.calculate_layout(width=80)
-
-    output = render_for_screen_reader(root)
-    assert output == "Line 1\nLine 2"
-
-def test_render_screen_reader_box_row():
-    """Test screen reader output joins row items with spaces"""
-    root = create_node('ink-root')
-    root.style['flexDirection'] = 'row'
-
-    text1 = create_node('ink-text')
-    append_child_node(text1, create_text_node("Word1"))
-    text2 = create_node('ink-text')
-    append_child_node(text2, create_text_node("Word2"))
-
-    append_child_node(root, text1)
-    append_child_node(root, text2)
-
-    root.yoga_node.calculate_layout(width=80)
-
-    output = render_for_screen_reader(root)
-    assert output == "Word1 Word2"
-
-def test_render_screen_reader_accessibility_role():
-    """Test screen reader output includes accessibility roles"""
-    root = create_node('ink-root')
-    root.internal_accessibility = {'role': 'button', 'state': {'selected': True}}
-
-    text = create_node('ink-text')
-    append_child_node(text, create_text_node("Submit"))
-    append_child_node(root, text)
-
-    root.yoga_node.calculate_layout(width=80)
-
-    output = render_for_screen_reader(root)
-    assert "button:" in output.lower() or "selected" in output.lower()
-```
-
-**Step 2:** Implement render_for_screen_reader in renderer.py
-
-**Step 3:** Verify tests pass
-
-**Verification:** `cd python_port && pytest tests/test_renderer.py -v`
-
----
-
-## Phase 7: Accessibility & Examples
-
-### Task 7.1: Accessibility Context
-**Files:** `python_port/inkpy/components/accessibility_context.py`, `python_port/inkpy/hooks/use_is_screen_reader_enabled.py`
-
-**Step 1:** Write failing tests
-```python
-# test_accessibility.py
-from inkpy.components.accessibility_context import AccessibilityContext
-from inkpy.hooks.use_is_screen_reader_enabled import use_is_screen_reader_enabled
-
-def test_accessibility_context_default():
-    """Test default accessibility context value"""
-    # Default should be screen reader disabled
-
-def test_use_is_screen_reader_enabled():
-    """Test hook returns correct value from context"""
-    # When context has is_screen_reader_enabled=True, hook should return True
-```
-
-**Step 2:** Implement
-
-```python
-# accessibility_context.py
-"""
-Accessibility Context - Provides screen reader state to components.
-
-Ported from: src/components/AccessibilityContext.ts
-"""
-from reactpy import create_context
-
-AccessibilityContext = create_context({
-    'is_screen_reader_enabled': False
-})
-```
-
-```python
-# use_is_screen_reader_enabled.py
-"""
-useIsScreenReaderEnabled hook - Returns whether screen reader is enabled.
-
-Ported from: src/hooks/use-is-screen-reader-enabled.ts
-"""
-from reactpy.core.hooks import use_context
-from inkpy.components.accessibility_context import AccessibilityContext
-
-def use_is_screen_reader_enabled() -> bool:
-    """
-    Returns whether a screen reader is enabled.
-
-    Useful when you want to render different output for screen readers.
-
-    Returns:
-        True if screen reader is enabled, False otherwise
-    """
-    context = use_context(AccessibilityContext)
-    return context.get('is_screen_reader_enabled', False)
-```
-
-**Step 3:** Add to public API
-
-**Verification:** `cd python_port && pytest tests/test_accessibility.py -v`
-
----
-
-### Task 7.2: Counter Example (E2E)
-**Files:** `python_port/examples/counter.py`, `python_port/tests/test_examples_e2e.py`
-
-**Purpose:** Create a working end-to-end counter example demonstrating the full render loop.
-
-**Step 1:** Write E2E test
-```python
-# test_examples_e2e.py
-import asyncio
-import io
-
-def test_counter_example_renders():
-    """Test counter example produces output"""
-    from examples.counter import Counter
-    from inkpy import render
-
-    stdout = io.StringIO()
-    instance = render(Counter(), stdout=stdout)
-
-    # Give it time to render
-    asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
-
-    output = stdout.getvalue()
-    assert "Count:" in output or "0" in output
-
-    instance.unmount()
-```
-
-**Step 2:** Implement counter.py
-```python
-"""
-Counter Example - Demonstrates state and timed updates.
-"""
-import asyncio
-from reactpy import component, use_state, use_effect
-from inkpy import render, Box, Text
-
-@component
-def Counter():
-    count, set_count = use_state(0)
-
-    @use_effect(dependencies=[])
-    async def timer():
-        while True:
-            await asyncio.sleep(1)
-            set_count(lambda c: c + 1)
-
-    return Box(
-        Text(f"Count: {count}", color="green"),
-        border_style="round",
-        padding=1
-    )
-
-if __name__ == "__main__":
-    instance = render(Counter())
-    asyncio.get_event_loop().run_forever()
-```
-
-**Verification:** `cd python_port && python examples/counter.py` (manual, Ctrl+C to exit)
-
----
-
-### Task 7.3: Interactive Example (E2E)
-**Files:** `python_port/examples/interactive.py`
-
-**Purpose:** Create an interactive example with keyboard navigation.
-
-**Step 1:** Implement interactive.py
-```python
-"""
-Interactive Example - Demonstrates keyboard input handling.
-"""
-import asyncio
-from reactpy import component, use_state
-from inkpy import render, Box, Text
-from inkpy.hooks import use_input, use_app
-
-@component
-def SelectList():
-    items = ["Option 1", "Option 2", "Option 3", "Exit"]
-    selected, set_selected = use_state(0)
-    app = use_app()
-
-    def handle_input(input_str, key):
-        if key.get('upArrow'):
-            set_selected(lambda s: max(0, s - 1))
-        elif key.get('downArrow'):
-            set_selected(lambda s: min(len(items) - 1, s + 1))
-        elif key.get('return'):
-            if selected == len(items) - 1:
-                app['exit']()
-
-    use_input(handle_input)
-
-    return Box(
-        [
-            Text(
-                f"{'>' if i == selected else ' '} {item}",
-                color="cyan" if i == selected else "white"
-            )
-            for i, item in enumerate(items)
-        ],
-        flex_direction="column",
-        border_style="single",
-        padding=1
-    )
-
-if __name__ == "__main__":
-    instance = render(SelectList())
-    asyncio.get_event_loop().run_until_complete(instance.wait_until_exit())
-```
-
-**Verification:** `cd python_port && python examples/interactive.py` (manual, navigate with arrows)
-
----
-
-## Phase 8: Documentation & Polish
-
-### Task 8.1: Complete Type Hints
-**Files:** All `python_port/inkpy/**/*.py`
-
-**Step 1:** Run mypy to identify missing types
-```bash
-cd python_port && mypy inkpy/ --ignore-missing-imports
-```
-
-**Step 2:** Add missing type annotations
-
-**Step 3:** Ensure `py.typed` marker exists
-
-**Verification:** `cd python_port && mypy inkpy/ --ignore-missing-imports` (no errors)
-
----
-
-### Task 8.2: Update Public API Exports
-**Files:** `python_port/inkpy/__init__.py`
-
-Add missing exports:
-```python
-# Add to __init__.py
-from inkpy.measure_element import measure_element
-from inkpy.hooks.use_is_screen_reader_enabled import use_is_screen_reader_enabled
-
-__all__ = [
-    # ... existing exports ...
-    'measure_element',
-    'use_is_screen_reader_enabled',
-]
+    lines = []
+    for i in range(line - context, line + context + 1):
+        code = linecache.getline(filepath, i)
+        if code:
+            lines.append({'line': i, 'value': code.rstrip()})
+    return lines
 ```
 
 ---
 
-### Task 8.3: README Update
-**Files:** `python_port/README.md`
+#### Task B.3: Transform accessibilityLabel Support
+**Effort:** 30 min
 
-Update with:
-- Installation instructions
-- Quick start guide
-- API reference links
-- Examples
-- Feature comparison with TypeScript Ink
+**Files:**
+- Modify: `inkpy/components/transform.py`
+
+**Add:**
+- `accessibility_label` prop
+- Show `accessibility_label` when screen reader enabled
+
+---
+
+### Phase C: TUI Backend Refinements (Should Have)
+
+#### Task C.1: Hide/Unhide Instance Methods
+**Effort:** 1 hour
+
+**Files:**
+- Modify: `inkpy/backend/tui_backend.py`
+
+**Add:**
+```python
+def hide_instance(self, node: DOMElement):
+    """Hide element by setting display none"""
+    if node.yoga_node:
+        node.yoga_node.set_display('none')
+
+def unhide_instance(self, node: DOMElement):
+    """Unhide element by setting display flex"""
+    if node.yoga_node:
+        node.yoga_node.set_display('flex')
+
+def hide_text_instance(self, node: TextNode):
+    """Hide text by setting value to empty string"""
+    set_text_node_value(node, '')
+
+def unhide_text_instance(self, node: TextNode, text: str):
+    """Unhide text by restoring value"""
+    set_text_node_value(node, text)
+```
+
+---
+
+#### Task C.2: Measure Function Application
+**Effort:** 1-2 hours
+
+**Files:**
+- Modify: `inkpy/dom.py`
+- Modify: `inkpy/layout/yoga_node.py`
+
+**Ensure:**
+- `setMeasureFunc` is properly called on Poga nodes for `ink-text`
+- Text nodes are re-measured when content changes
+
+---
+
+### Phase D: Polish (Nice to Have)
+
+#### Task D.1: measureElement Export
+**Effort:** 30 min
+
+#### Task D.2: Complete ANSI Escape Sequences
+**Effort:** 1 hour
+
+Add to `log_update.py`:
+- `ansiEscapes.clearTerminal` equivalent
+- Full cursor control sequences
+
+---
+
+## Implementation Order
+
+```
+Phase A (Critical - ~8-11 hours total):
+├── A.1: ANSI Tokenizer Enhancement (4-6h)
+├── A.2: Render Integration Test (2-3h)
+└── A.3: Text Truncation (2h)
+
+Phase B (Should Have - ~4-6 hours total):
+├── B.1: Text Screen Reader (1-2h)
+├── B.2: ErrorOverview Enhancement (2-3h)
+└── B.3: Transform accessibilityLabel (30min)
+
+Phase C (Should Have - ~3 hours total):
+├── C.1: Hide/Unhide Methods (1h)
+└── C.2: Measure Function (1-2h)
+
+Phase D (Nice to Have - ~2 hours total):
+├── D.1: measureElement (30min)
+└── D.2: ANSI Escapes (1h)
+
+TOTAL: ~17-22 hours
+```
 
 ---
 
 ## Verification Checklist
 
-After completing all tasks, run the full test suite:
+### For 100% Parity
 
-```bash
-cd python_port
-source venv/bin/activate
-pytest tests/ -v --tb=short
-```
+- [x] Event emitter distributes keyboard input
+- [x] useInput hook receives and processes input
+- [x] Focus navigation with Tab/Shift+Tab works
+- [x] Escape clears focus
+- [x] Ctrl+C exits (when exitOnCtrlC=true)
+- [x] Terminal resize handled
+- [x] CI mode works (no ANSI escape updates)
+- [ ] Screen reader mode outputs accessible text
+- [x] Debug mode shows all output
+- [x] Incremental rendering reduces flicker
+- [x] Border rendering matches original
+- [x] Color output matches (named, hex, rgb, ansi256)
+- [ ] Text wrapping/truncation matches (truncate modes)
+- [ ] Error display shows source code excerpts
+- [x] Static component renders permanently
+- [x] All 8 hooks functional
 
-Expected: All tests pass (0 failures, ~160+ tests)
+### Test Scenarios
 
-### Feature Parity Checklist
-
-| Feature | TypeScript | Python | Status |
-|---------|-----------|--------|--------|
-| Output buffer | ✅ | ⬜ | Task 6.1 |
-| Terminal resize | ✅ | ⬜ | Task 6.3 |
-| Render throttling | ✅ | ⬜ | Task 6.3 |
-| Screen reader | ✅ | ⬜ | Task 6.5, 7.1 |
-| measureElement | ✅ | ⬜ | Task 6.4 |
-| E2E examples | ✅ | ⬜ | Task 7.2, 7.3 |
+1. **Hello World** - basic render ✅
+2. **Counter** - state updates (needs E2E test)
+3. **Interactive** - keyboard input ✅
+4. **Multi-focus** - Tab navigation ✅
+5. **Static + Dynamic** - mixed content ✅
+6. **Resize** - terminal resize handling ✅
+7. **Error** - error boundary display (needs code excerpt)
 
 ---
 
-## Estimated Timeline
+## Dependencies & Packages
 
-| Phase | Tasks | Time Estimate |
-|-------|-------|---------------|
-| Phase 6 | 5 tasks | 4-5 hours |
-| Phase 7 | 3 tasks | 2-3 hours |
-| Phase 8 | 3 tasks | 2 hours |
-| **Total** | **11 tasks** | **8-10 hours** |
+### Current Python Packages
+```
+# requirements.txt
+reactpy>=1.0.0
+poga>=0.1.0
+wcwidth>=0.2.5        # Wide character width calculation
+```
+
+### Already Included
+- All rendering utilities
+- All input handling
+- EventEmitter
+- Log update
+
+---
+
+## Progress Summary
+
+| Phase | Tasks | Completed | Remaining |
+|-------|-------|-----------|-----------|
+| Phase 3 (Renderer) | 6 | 6 | 0 |
+| Phase 4 (Input) | 3 | 3 | 0 |
+| Phase 5 (Components) | 5 | 5 | 0 |
+| Phase 6 (App Infra) | 5 | 5 | 0 |
+| Phase 7 (Integration) | 3 | 1 | 2 |
+| Phase A (Critical) | 3 | 0 | 3 |
+| Phase B (Refinements) | 3 | 0 | 3 |
+| Phase C (TUI Backend) | 2 | 0 | 2 |
+| Phase D (Polish) | 2 | 0 | 2 |
+
+**Overall: ~75% complete**
 
 ---
 
 ## Next Steps
 
-Ready to execute? Start with **Task 6.1: Log Update Module**.
+Ready to execute? The most impactful work is:
 
-Trigger: `execution-workflow.mdc`
+1. **Task A.1: ANSI Tokenizer** - Critical for proper text rendering
+2. **Task A.2: Integration Tests** - Verify everything works together
+3. **Task A.3: Text Truncation** - Complete text wrapping feature set
 
+To execute, use: `@.cursor/rules/execution-workflow.mdc`

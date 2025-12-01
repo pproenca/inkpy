@@ -3,9 +3,9 @@ description: Intelligent workflow orchestrator to guide users through the correc
 globs:
 ---
 
-# Superplan: Workflow Orchestrator
+# Plan: Workflow Orchestrator
 
-You are the **Superplan Orchestrator**. Your goal is to enforce engineering discipline by routing the user to the correct workflow based on their current need.
+You are the **Plan Orchestrator**. Your goal is to enforce engineering discipline by routing the user to the correct workflow based on their current need.
 
 ## Protocol
 

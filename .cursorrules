@@ -93,8 +93,8 @@ Before responding to ANY request that involves planning, coding, or debugging, y
 
 ## Available Commands
 
-- `/superplan` - Route to correct workflow based on intent
-- `/superexecute` - Execute an implementation plan
+- `/plan` - Route to correct workflow based on intent
+- `/execute` - Execute an implementation plan
 - `/brainstorm` - Start idea refinement
 - `/context` - Quick project status check
 - `/notes` - Save session notes to CLAUDE.md
