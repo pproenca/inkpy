@@ -1,8 +1,11 @@
 """
 Text wrapping module - wraps text to fit within max width
+
+Uses ANSI tokenizer for proper ANSI-aware wrapping and truncation.
 """
 from typing import Dict, Optional
 import re
+from .renderer.ansi_tokenize import string_width, slice_ansi, tokenize_ansi
 
 # Cache for wrapped text
 _cache: Dict[str, str] = {}
@@ -38,30 +41,54 @@ def wrap_text(text: str, max_width: float, wrap_type: str = 'wrap') -> str:
 
 def _wrap_ansi(text: str, max_width: int) -> str:
     """
-    Wrap text preserving ANSI codes.
-    Simple implementation - wraps at word boundaries.
+    Wrap text preserving ANSI codes using ANSI-aware width calculation.
+    Wraps at word boundaries when possible, falls back to character boundaries for CJK.
     """
     lines = text.split('\n')
     wrapped_lines = []
     
     for line in lines:
-        if len(_strip_ansi(line)) <= max_width:
+        line_width = string_width(line)
+        if line_width <= max_width:
             wrapped_lines.append(line)
         else:
-            # Split into words and wrap
+            # Split into words and wrap using ANSI-aware width
             words = _split_preserving_ansi(line)
             current_line = ''
             
             for word in words:
-                word_stripped = _strip_ansi(word)
-                current_stripped = _strip_ansi(current_line)
+                word_width = string_width(word)
+                current_width = string_width(current_line)
+                space_width = 1 if current_line else 0
                 
-                if len(current_stripped) + len(word_stripped) + 1 <= max_width:
+                if current_width + space_width + word_width <= max_width:
+                    # Word fits on current line
                     current_line += (' ' if current_line else '') + word
-                else:
+                elif word_width <= max_width:
+                    # Word doesn't fit, but is smaller than max_width
+                    # Start new line with this word
                     if current_line:
                         wrapped_lines.append(current_line)
                     current_line = word
+                else:
+                    # Word is too long - need to break it
+                    if current_line:
+                        wrapped_lines.append(current_line)
+                        current_line = ''
+                    
+                    # Break word into chunks using ANSI-aware slicing
+                    word_start = 0
+                    while word_start < len(word):
+                        # Try to find a good break point (space, punctuation)
+                        # For now, just slice by width
+                        chunk = slice_ansi(word, word_start, word_start + max_width)
+                        if chunk:
+                            wrapped_lines.append(chunk)
+                            # Calculate how much we consumed
+                            chunk_width = string_width(chunk)
+                            word_start += chunk_width
+                        else:
+                            break
             
             if current_line:
                 wrapped_lines.append(current_line)
@@ -69,22 +96,34 @@ def _wrap_ansi(text: str, max_width: int) -> str:
     return '\n'.join(wrapped_lines)
 
 def _truncate_text(text: str, max_width: int, truncate_type: str) -> str:
-    """Truncate text to max width"""
-    stripped = _strip_ansi(text)
+    """
+    Truncate text to max width using ANSI-aware operations.
+    Matches cli-truncate behavior.
+    """
+    text_width = string_width(text)
     
-    if len(stripped) <= max_width:
+    if text_width <= max_width:
         return text
     
+    ellipsis = '…'
+    ellipsis_width = string_width(ellipsis)
+    available_width = max_width - ellipsis_width
+    
     if truncate_type == 'truncate-end':
-        # Truncate at end, preserve ANSI codes
-        truncated = _truncate_preserving_ansi(text, max_width - 1) + '…'
+        # Truncate at end: keep start, add ellipsis
+        truncated = slice_ansi(text, 0, available_width) + ellipsis
     elif truncate_type == 'truncate-middle':
-        half = max_width // 2
-        truncated = _truncate_preserving_ansi(text, half - 1) + '…' + _truncate_preserving_ansi(text, -(half - 1))
+        # Truncate in middle: keep start and end, ellipsis in middle
+        half_width = available_width // 2
+        start_part = slice_ansi(text, 0, half_width)
+        end_part = slice_ansi(text, text_width - half_width, text_width)
+        truncated = start_part + ellipsis + end_part
     elif truncate_type == 'truncate-start':
-        truncated = '…' + _truncate_preserving_ansi(text, -(max_width - 1))
+        # Truncate at start: ellipsis, then end
+        truncated = ellipsis + slice_ansi(text, text_width - available_width, text_width)
     else:
-        truncated = _truncate_preserving_ansi(text, max_width)
+        # Default: truncate at end
+        truncated = slice_ansi(text, 0, available_width) + ellipsis
     
     return truncated
 
@@ -120,35 +159,5 @@ def _split_preserving_ansi(text: str) -> list:
     
     return words if words else [text]
 
-def _truncate_preserving_ansi(text: str, length: int) -> str:
-    """Truncate text preserving ANSI codes"""
-    if length < 0:
-        # Negative length means from end
-        stripped = _strip_ansi(text)
-        if len(stripped) <= abs(length):
-            return text
-        # Keep last abs(length) characters
-        return text[-(abs(length) + len(text) - len(stripped)):]
-    
-    stripped = _strip_ansi(text)
-    if len(stripped) <= length:
-        return text
-    
-    # Truncate while preserving ANSI codes
-    result = ''
-    stripped_count = 0
-    
-    for char in text:
-        if char == '\x1B':
-            result += char
-            # Skip ANSI sequence
-            continue
-        if stripped_count < length:
-            result += char
-            if not re.match(r'\x1B', char):
-                stripped_count += 1
-        else:
-            break
-    
-    return result
+# Removed _truncate_preserving_ansi - now using slice_ansi from ansi_tokenize
 
