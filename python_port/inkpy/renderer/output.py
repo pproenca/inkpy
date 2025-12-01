@@ -6,6 +6,7 @@ Also responsible for applying transformations to each character of the output.
 """
 from typing import List, Optional, Callable, Dict, Any
 import re
+from .ansi_tokenize import slice_ansi, string_width
 
 # Type alias for output transformers
 OutputTransformer = Callable[[str, int], str]
@@ -139,8 +140,8 @@ class Output:
                     
                     # Skip if completely outside clipping area
                     if clip_horizontally:
-                        # Calculate text width (simplified - doesn't handle ANSI codes perfectly)
-                        max_line_width = max(len(self._strip_ansi(line)) for line in lines)
+                        # Calculate text width using ANSI-aware width calculation
+                        max_line_width = max(string_width(line) for line in lines)
                         if x + max_line_width < clip['x1'] or x > clip['x2']:
                             continue
                     
@@ -148,26 +149,25 @@ class Output:
                         if y + len(lines) < clip['y1'] or y > clip['y2']:
                             continue
                     
-                    # Apply horizontal clipping
+                    # Apply horizontal clipping using ANSI-aware slicing
                     if clip_horizontally:
                         clipped_lines = []
                         for line in lines:
-                            stripped = self._strip_ansi(line)
-                            line_width = len(stripped)
+                            line_width = string_width(line)
                             
-                            # Calculate visible portion
-                            from_idx = 0
+                            # Calculate visible portion in display width
+                            from_width = 0
                             if x < clip['x1']:
-                                from_idx = clip['x1'] - x
+                                from_width = clip['x1'] - x
                             
-                            to_idx = line_width
+                            to_width = line_width
                             if x + line_width > clip['x2']:
-                                to_idx = clip['x2'] - x + 1
+                                to_width = clip['x2'] - x
                             
-                            # Slice the line (preserving ANSI codes approximately)
-                            if from_idx > 0 or to_idx < line_width:
-                                # Simple slicing - doesn't perfectly preserve ANSI codes
-                                clipped_lines.append(line[from_idx:to_idx])
+                            # Slice using ANSI-aware function
+                            if from_width > 0 or to_width < line_width:
+                                clipped_line = slice_ansi(line, from_width, to_width)
+                                clipped_lines.append(clipped_line)
                             else:
                                 clipped_lines.append(line)
                         
