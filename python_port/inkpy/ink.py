@@ -101,10 +101,26 @@ class Ink:
         if not is_in_ci():
             self._setup_resize_handler()
         
-        # Console patching (placeholder for now)
+        # Console patching
+        self.restore_console: Optional[Callable[[], None]] = None
         if patch_console and not debug:
-            # TODO: Implement console patching
-            pass
+            from inkpy.console_patch import patch_console
+            
+            def console_callback(stream: str, data: str):
+                """Handle intercepted console output"""
+                if stream == 'stdout':
+                    self._write_to_stdout(data)
+                elif stream == 'stderr':
+                    # Filter React error messages (similar to TypeScript version)
+                    is_react_message = data.startswith('The above error occurred')
+                    if not is_react_message:
+                        self._write_to_stderr(data)
+            
+            self.restore_console = patch_console(
+                stdout,
+                stderr,
+                console_callback
+            )
     
     def render(self, node):
         """Render a ReactPy component"""
@@ -289,6 +305,11 @@ class Ink:
         
         if self._unsubscribe_resize:
             self._unsubscribe_resize()
+        
+        # Restore console if patched
+        if self.restore_console:
+            self.restore_console()
+            self.restore_console = None
         
         # Final render for CI
         if is_in_ci():
