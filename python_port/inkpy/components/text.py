@@ -1,11 +1,13 @@
 """
 Text component module.
 
-Enhanced Text component with full styling support.
+Enhanced Text component with full styling support and inherited background.
 """
 from typing import Optional, Union, Any
 from reactpy import component, html
+from reactpy.core.hooks import use_context
 from ..renderer.colorize import colorize
+from .background_context import background_context
 
 
 def _apply_text_styles(
@@ -85,12 +87,12 @@ def Text(
     **kwargs
 ):
     """
-    Text component with full styling support.
+    Text component with full styling support and inherited background.
     
     Args:
         children: Text content
         color: Foreground color
-        backgroundColor: Background color
+        backgroundColor: Background color (explicit, overrides inherited)
         dimColor: Dim the color
         bold: Make text bold
         italic: Make text italic
@@ -101,6 +103,16 @@ def Text(
         style: Additional style dictionary
         **kwargs: Additional props
     """
+    # Get inherited background color from context
+    try:
+        inherited_background = use_context(background_context)
+    except RuntimeError:
+        # Context not available (e.g., in tests without Layout)
+        inherited_background = None
+    
+    # Use explicit backgroundColor if provided, otherwise use inherited
+    effective_background = backgroundColor if backgroundColor is not None else inherited_background
+    
     if style is None:
         style = {}
     
@@ -109,7 +121,7 @@ def Text(
         return _apply_text_styles(
             text,
             color=color,
-            backgroundColor=backgroundColor,
+            backgroundColor=effective_background,
             dimColor=dimColor,
             bold=bold,
             italic=italic,
