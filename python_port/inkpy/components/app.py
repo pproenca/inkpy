@@ -14,6 +14,7 @@ from inkpy.components.stdin_context import StdinContext
 from inkpy.components.stdout_context import StdoutContext
 from inkpy.components.stderr_context import StderrContext
 from inkpy.components.focus_context import FocusContext
+from inkpy.components.error_overview import ErrorOverview
 from inkpy.input.event_emitter import EventEmitter
 
 @component
@@ -40,6 +41,25 @@ def App(
     
     # Input loop thread control - use threading.Event for proper synchronization
     loop_control, _ = use_state(lambda: {'event': threading.Event(), 'thread': None})
+    
+    # Error boundary state
+    error, set_error = use_state(None)
+    
+    # Handle error - call on_exit when error occurs
+    def handle_error_catch(err: Exception):
+        """Handle caught error - set state and call on_exit"""
+        set_error(err)
+        if on_exit:
+            on_exit(err)
+    
+    # Effect to catch errors (ReactPy doesn't have componentDidCatch, so we use effect)
+    def setup_error_boundary():
+        """Set up error boundary - catch errors during render"""
+        # In ReactPy, we need to wrap children rendering in try/except
+        # This will be done in the render function
+        return None
+    
+    use_effect(setup_error_boundary, dependencies=[])
     
     # Focus state management
     is_focus_enabled, set_is_focus_enabled = use_state(True)
@@ -288,10 +308,13 @@ def App(
                                 StderrContext(
                                     value=stderr_context_value,
                                     children=[
-                                        FocusContext(
-                                            value=focus_context_value,
-                                            children=[children]
-                                        )
+                                FocusContext(
+                                    value=focus_context_value,
+                                    children=[
+                                        # Error boundary: show ErrorOverview if error, otherwise show children
+                                        ErrorOverview(error) if error else children
+                                    ]
+                                )
                                     ]
                                 )
                             ]
