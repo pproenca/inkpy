@@ -1,10 +1,19 @@
 """
 TUI Backend - Bridges ReactPy VDOM to DOM node system
 """
-from typing import Any, Optional
+from typing import Any, Optional, Dict, List, Callable
 from reactpy.core.layout import Layout
-from inkpy.dom import create_node, create_text_node, append_child_node, DOMElement
-from inkpy.layout.yoga_node import YogaNode
+from inkpy.dom import (
+    create_node, 
+    create_text_node, 
+    append_child_node, 
+    set_style,
+    set_attribute,
+    DOMElement,
+    TextNode
+)
+from inkpy.layout.styles import apply_styles
+
 
 class TUIBackend:
     """Backend that converts ReactPy VDOM to DOM nodes"""
@@ -12,6 +21,7 @@ class TUIBackend:
     def __init__(self):
         self.root: Optional[DOMElement] = None
         self._layout: Optional[Layout] = None
+        self._vdom_to_dom_map: Dict[int, DOMElement] = {}
     
     def mount(self, component) -> DOMElement:
         """Mount a ReactPy component and return root DOM node"""
@@ -21,10 +31,10 @@ class TUIBackend:
         if hasattr(component, 'render'):
             vdom = component.render()
         else:
-            # Component might be a function
+            # Component might be a function or callable
             try:
                 vdom = component()
-            except:
+            except Exception:
                 vdom = None
         
         # Convert VDOM to DOM
@@ -39,12 +49,14 @@ class TUIBackend:
         # 1. Get updated VDOM from Layout
         # 2. Diff with current DOM
         # 3. Update DOM nodes accordingly
+        # For now, this is a placeholder
         pass
     
     def unmount(self):
         """Clean up backend"""
         self.root = None
         self._layout = None
+        self._vdom_to_dom_map.clear()
     
     def calculate_layout(self, width: int = 80):
         """Calculate Yoga layout for root node"""
@@ -54,16 +66,28 @@ class TUIBackend:
     def render(self) -> str:
         """Render DOM tree to string"""
         # Full implementation would traverse DOM and render to string
+        # This will be implemented when integrating with renderer module
         return ""
     
     def vdom_to_dom(self, vdom: Any, parent: Optional[DOMElement] = None) -> Optional[DOMElement]:
-        """Convert ReactPy VDOM to DOM nodes"""
+        """
+        Convert ReactPy VDOM to DOM nodes.
+        
+        Args:
+            vdom: ReactPy VDOM (dict with tagName/attributes/children, or string)
+            parent: Parent DOM element to append to
+            
+        Returns:
+            Created DOM element (or None for text nodes)
+        """
+        # Handle text nodes
         if isinstance(vdom, str):
             text_node = create_text_node(vdom)
             if parent:
                 append_child_node(parent, text_node)
             return None
         
+        # Handle non-dict VDOM (skip None, numbers, etc.)
         if not isinstance(vdom, dict):
             return None
         
@@ -75,6 +99,7 @@ class TUIBackend:
             'span': 'ink-text',
         }
         
+        # Default to ink-box if tag not recognized
         node_name = node_name_map.get(tag, 'ink-box')
         node = create_node(node_name)
         
@@ -82,15 +107,34 @@ class TUIBackend:
         attributes = vdom.get("attributes", {})
         for key, value in attributes.items():
             if key == 'style':
-                node.style = value
+                # Apply style to node
+                set_style(node, value)
+                # Also apply to Yoga node using proper style system
+                if node.yoga_node and value:
+                    apply_styles(node.yoga_node, value)
+            elif key == 'internal_transform':
+                # Store transform function for text rendering
+                node.internal_transform = value
+            elif key == 'internal_static':
+                # Mark node as static
+                node.internal_static = value
+            elif key == 'internal_accessibility':
+                # Set accessibility attributes
+                set_attribute(node, key, value)
             else:
-                node.attributes[key] = value
+                # Store other attributes
+                set_attribute(node, key, value)
         
-        # Process children
+        # Process children recursively
         children = vdom.get("children", [])
-        for child in children:
-            self.vdom_to_dom(child, node)
+        if not isinstance(children, list):
+            children = [children] if children is not None else []
         
+        for child in children:
+            if child is not None:
+                self.vdom_to_dom(child, node)
+        
+        # Append to parent if provided
         if parent:
             append_child_node(parent, node)
         
