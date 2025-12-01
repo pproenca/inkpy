@@ -7,6 +7,7 @@ from typing import Dict, Any
 from ..dom import DOMElement
 from .output import Output
 from .render_node import render_node_to_output
+from .screen_reader import render_node_to_screen_reader_output
 
 
 def renderer(node: DOMElement, is_screen_reader_enabled: bool) -> Dict[str, Any]:
@@ -32,14 +33,18 @@ def renderer(node: DOMElement, is_screen_reader_enabled: bool) -> Dict[str, Any]
     
     if is_screen_reader_enabled:
         # Screen reader mode - use text-only output
-        # TODO: Implement render_node_to_screen_reader_output
-        output = ''
+        output = render_node_to_screen_reader_output(
+            node,
+            skip_static=True
+        )
         output_height = 0 if output == '' else len(output.split('\n'))
         
         static_output = ''
         if node.static_node:
-            # TODO: Render static node for screen reader
-            static_output = ''
+            static_output = render_node_to_screen_reader_output(
+                node.static_node,
+                skip_static=False
+            )
         
         return {
             'output': output,
