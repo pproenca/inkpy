@@ -23,6 +23,7 @@ from inkpy.hooks.use_stdout import use_stdout
 from inkpy.hooks.use_stderr import use_stderr
 from inkpy.hooks.use_focus import use_focus
 from inkpy.hooks.use_focus_manager import use_focus_manager
+from inkpy.hooks.use_is_screen_reader_enabled import use_is_screen_reader_enabled
 
 __all__ = [
     # Core
@@ -44,4 +45,5 @@ __all__ = [
     'use_stderr',
     'use_focus',
     'use_focus_manager',
+    'use_is_screen_reader_enabled',
 ]
