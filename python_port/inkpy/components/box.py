@@ -101,10 +101,14 @@ def Box(
     attributes.update(kwargs)
     
     # Create box element
-    box_element = html.div({
-        **attributes,
-        'children': children
-    })
+    # Children must be passed as positional args, not in attributes dict
+    # Otherwise ReactPy stringifies component objects instead of rendering them
+    if children is None:
+        box_element = html.div(attributes)
+    elif isinstance(children, (list, tuple)):
+        box_element = html.div(attributes, *children)
+    else:
+        box_element = html.div(attributes, children)
     
     # If backgroundColor is set, wrap with BackgroundContext Provider
     if backgroundColor:

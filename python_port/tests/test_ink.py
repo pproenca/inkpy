@@ -17,6 +17,12 @@ class MockStdout:
         
     def getvalue(self):
         return self.buffer.getvalue()
+    
+    def flush(self):
+        pass
+    
+    def isatty(self):
+        return True
 
 def test_ink_initialization():
     """Test Ink class can be initialized"""

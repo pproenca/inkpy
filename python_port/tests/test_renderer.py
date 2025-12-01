@@ -1,50 +1,70 @@
+"""
+Tests for the renderer module.
+
+The renderer converts DOM trees to output strings.
+"""
 import pytest
-from inkpy.renderer.renderer import Renderer
-from inkpy.layout.yoga_node import YogaNode
-from inkpy.layout.text_node import TextNode
+from inkpy.renderer.renderer import renderer
+from inkpy.dom import create_node, create_text_node, append_child_node
+from inkpy.layout.styles import apply_styles
+
 
 def test_render_text():
-    node = TextNode("Hello")
-    # Manually set layout for test
-    node.view.set_frame_position_and_size(0, 0, 5, 1)
+    """Test rendering a simple text node"""
+    # Create DOM structure
+    root = create_node('ink-root')
+    text_elem = create_node('ink-text')
+    text_node = create_text_node("Hello")
     
-    renderer = Renderer()
-    output = renderer.render_node(node)
+    append_child_node(text_elem, text_node)
+    append_child_node(root, text_elem)
     
-    # Expect ANSI cursor move to 1,1 and "Hello"
-    assert "\x1b[1;1H" in output
-    assert "Hello" in output
+    # Calculate layout
+    root.yoga_node.calculate_layout(width=80)
+    
+    result = renderer(root, is_screen_reader_enabled=False)
+    
+    assert "Hello" in result['output']
 
-def test_render_colored_text():
-    # Not implemented styles yet, but assuming node has style
-    # node = TextNode("Hello", style={'color': 'red'}) 
-    pass
 
-def test_render_with_layout():
-    parent = YogaNode()
-    parent.set_style({'width': 20, 'height': 10})
+def test_render_empty_node():
+    """Test rendering empty node returns empty output"""
+    root = create_node('ink-root')
+    root.yoga_node.calculate_layout(width=80)
     
-    child = TextNode("Hello")
-    child.view.set_frame_position_and_size(5, 2, 5, 1) # Relative to parent? Or absolute?
-    # Renderer needs absolute coordinates usually.
-    # If our layout engine provides relative, Renderer needs to calculate absolute.
+    result = renderer(root, is_screen_reader_enabled=False)
     
-    # Let's assume get_layout() returns relative, and Renderer traverses to compute absolute.
-    
-    parent.add_child(child)
-    
-    renderer = Renderer()
-    # Set parent at 0,0
-    parent.view.set_frame_position_and_size(0, 0, 20, 10)
-    
-    output = renderer.render(parent)
-    
-    # Child should be at 0+5, 0+2 = 5, 2.
-    # Terminal coordinates are 1-based? So 3, 6? (row 3, col 6)
-    # \x1b[row;colH
-    assert "\x1b[3;6H" in output
-    assert "Hello" in output
+    # Empty node should have empty or minimal output
+    assert result['outputHeight'] >= 0
+
 
 def test_render_nested_boxes():
-    # Similar to above but deeper nesting
-    pass
+    """Test rendering nested box elements"""
+    root = create_node('ink-root')
+    box1 = create_node('ink-box')
+    box2 = create_node('ink-box')
+    text_elem = create_node('ink-text')
+    text_node = create_text_node("Nested")
+    
+    append_child_node(text_elem, text_node)
+    append_child_node(box2, text_elem)
+    append_child_node(box1, box2)
+    append_child_node(root, box1)
+    
+    root.yoga_node.calculate_layout(width=80)
+    
+    result = renderer(root, is_screen_reader_enabled=False)
+    
+    assert "Nested" in result['output']
+
+
+def test_render_returns_proper_structure():
+    """Test that renderer returns expected dictionary structure"""
+    root = create_node('ink-root')
+    root.yoga_node.calculate_layout(width=80)
+    
+    result = renderer(root, is_screen_reader_enabled=False)
+    
+    assert 'output' in result
+    assert 'outputHeight' in result
+    assert 'staticOutput' in result

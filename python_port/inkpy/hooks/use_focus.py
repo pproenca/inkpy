@@ -41,11 +41,12 @@ def use_focus(
     focus_id = use_memo(lambda: id or str(random.randint(10000, 99999)), [id])
     
     # Register/unregister with focus context
-    use_effect(
-        lambda: focus_context['add'](focus_id, {'auto_focus': auto_focus}),
-        dependencies=[focus_id, auto_focus],
-        cleanup=lambda: focus_context['remove'](focus_id)
-    )
+    # ReactPy's use_effect expects cleanup to be returned from the effect function
+    def register_effect():
+        focus_context['add'](focus_id, {'auto_focus': auto_focus})
+        return lambda: focus_context['remove'](focus_id)
+    
+    use_effect(register_effect, dependencies=[focus_id, auto_focus])
     
     # Activate/deactivate based on is_active
     use_effect(
@@ -54,11 +55,13 @@ def use_focus(
     )
     
     # Manage raw mode when active
-    use_effect(
-        lambda: stdin.set_raw_mode(True) if (hasattr(stdin, 'set_raw_mode') and is_active) else None,
-        dependencies=[is_active],
-        cleanup=lambda: stdin.set_raw_mode(False) if hasattr(stdin, 'set_raw_mode') else None
-    )
+    def raw_mode_effect():
+        if hasattr(stdin, 'set_raw_mode') and is_active:
+            stdin.set_raw_mode(True)
+            return lambda: stdin.set_raw_mode(False) if hasattr(stdin, 'set_raw_mode') else None
+        return None
+    
+    use_effect(raw_mode_effect, dependencies=[is_active])
     
     return {
         'is_focused': bool(focus_id) and focus_context.get('active_id') == focus_id,
