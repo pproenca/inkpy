@@ -14,37 +14,110 @@ Use this workflow to turn ideas into fully formed designs through collaborative 
 - Exploring architectural options
 - **Before** writing any implementation code
 
+## Progress Tracking
+
+Use `todo_write` to track each phase:
+- Understanding: Clarify the problem space
+- Exploring: Investigate alternative approaches
+- Presenting: Document proposed design
+- Handoff: Transition to implementation
+
+Mark each phase as `in_progress` when starting, `completed` when done.
+
 ## Workflow Steps
 
 ### Phase 1: Understanding
 
-1. **Context Check**: Read relevant files/docs to understand existing system.
-2. **Scope & Constraints**: Ask questions to clarify:
-   - MVP vs Production-ready?
-   - Performance/Security constraints?
-   - Target users?
+**Step 1: Check project context**
+- Read relevant files, docs, recent commits
+- Understand what exists before proposing what to build
+
+**Step 2: Gather scope and constraints**
+
+Ask questions to clarify:
+- MVP vs Production-ready?
+- Performance/Security constraints?
+- Target users?
+
+**Step 3: Context-specific questions**
+
+Continue with questions one at a time:
+- Purpose: What problem does this solve?
+- Success criteria: How will we know it works?
+- Any unique constraints or requirements
 
 ### Phase 2: Exploring Approaches
 
-1. **Propose Options**: Outline 2-3 approaches with trade-offs.
-2. **Recommendation**: State your preferred approach and why.
-3. **Selection**: Ask user to choose (using `ask_question` or text).
+**Step 1: Identify 2-3 approaches**
 
-### Phase 3: Detailed Design
+After understanding the idea, propose 2-3 different approaches:
+- Describe each briefly with trade-offs
+- Lead with your recommendation and explain why
+- Keep descriptions concise (2-3 sentences each)
 
-1. **Present in Sections**: Break design into 200-300 word chunks.
-2. **Validate Incrementally**: Stop after each section to ask "Does this look right?"
-3. **Refine**: Adjust based on feedback before moving to next section.
+**Step 2: Get approach selection**
 
-### Phase 4: Documentation & Handoff
+Ask: "Which approach would you prefer?"
+- [Approach A name] (recommended): [Brief description]
+- [Approach B name]: [Brief description]
+- [Approach C name]: [Brief description]
 
-1. **Document**: Write design to `docs/plans/YYYY-MM-DD-<topic>-design.md` (optional but recommended).
-2. **Transition**: Ask if ready to move to implementation planning.
+### Phase 3: Presenting the Design
 
-## Tool Usage
+**Step 1: Present design in sections**
 
-- Use `ask_question` for major decisions (Scope, Approach, Next Steps).
-- Use `todo_write` to track progress through the 4 phases.
+Once approach is selected, present the design:
+- Break into sections of 200-300 words
+- Cover: architecture, components, data flow, error handling, testing
+- One section at a time
+
+**Step 2: Validate each section**
+
+After each section, ask:
+> "Does this section of the design look right?"
+> - Looks good: Proceed to next section
+> - Minor tweaks: I'll specify the changes
+> - Needs rethinking: Let's discuss the issues
+
+**Step 3: Handle feedback**
+
+- **Looks good:** Proceed to next section
+- **Minor tweaks:** Wait for their specification, apply changes, re-validate
+- **Needs rethinking:** Discuss issues, potentially return to Phase 2
+
+### Phase 4: After the Design
+
+**Step 1: Documentation decision**
+
+Ask: "How should I proceed with documentation?"
+- Save and commit: Write design doc and commit to git
+- Save only: Write design doc without committing
+- Skip docs: Proceed without saving design document
+
+**Step 2: Save design (if chosen)**
+
+- Write to `docs/plans/YYYY-MM-DD-<topic>-design.md`
+
+**Step 3: Implementation handoff**
+
+Ask: "Ready to proceed with implementation?"
+- Create worktree: Set up isolated workspace and write implementation plan
+- Just the plan: Write implementation plan in current workspace
+- Stop here: I'll handle implementation separately
+
+**Step 4: Execute choice**
+
+- **Create worktree:** See `@.cursor/skills/using-git-worktrees.md`, then trigger `planning-workflow.mdc`
+- **Just the plan:** Trigger `planning-workflow.mdc` directly
+- **Stop here:** Report completion, offer to continue later
+
+## Key Principles
+
+- **One question at a time** - Don't overwhelm with multiple questions
+- **YAGNI ruthlessly** - Remove unnecessary features from all designs
+- **Explore alternatives** - Always propose 2-3 approaches before settling
+- **Incremental validation** - Present design in sections, validate each
+- **Be flexible** - Go back and clarify when something doesn't make sense
 
 ## Example Trigger
 
