@@ -187,12 +187,90 @@ class Ink:
         
         start_time = time.perf_counter()
         
-        # Render logic will be implemented in Task 7.2
-        # For now, placeholder that calls on_render callback
+        # Import renderer
+        from inkpy.renderer.renderer import renderer
         
-        render_time = (time.perf_counter() - start_time) * 1000  # Convert to ms
+        # Render
+        result = renderer(self.root_node, self.is_screen_reader_enabled)
         
-        # Call on_render callback with metrics
+        # Handle static output
+        has_static_output = result['staticOutput'] and result['staticOutput'] != '\n'
+        
+        if self.options['debug']:
+            if has_static_output:
+                self.full_static_output += result['staticOutput']
+            self.options['stdout'].write(self.full_static_output + result['output'])
+            
+            render_time = (time.perf_counter() - start_time) * 1000
+            if self.options.get('on_render'):
+                metrics = RenderMetrics(render_time=render_time)
+                self.options['on_render'](metrics)
+            return
+        
+        # Handle CI mode
+        from inkpy.is_in_ci import is_in_ci
+        if is_in_ci():
+            if has_static_output:
+                self.options['stdout'].write(result['staticOutput'])
+            self.last_output = result['output']
+            self.last_output_height = result['outputHeight']
+            
+            render_time = (time.perf_counter() - start_time) * 1000
+            if self.options.get('on_render'):
+                metrics = RenderMetrics(render_time=render_time)
+                self.options['on_render'](metrics)
+            return
+        
+        # Handle screen reader mode
+        if self.is_screen_reader_enabled:
+            # TODO: Implement screen reader output handling
+            # For now, just write output
+            if has_static_output:
+                self.options['stdout'].write(result['staticOutput'])
+            self.options['stdout'].write(result['output'])
+            self.last_output = result['output']
+            self.last_output_height = result['outputHeight']
+            
+            render_time = (time.perf_counter() - start_time) * 1000
+            if self.options.get('on_render'):
+                metrics = RenderMetrics(render_time=render_time)
+                self.options['on_render'](metrics)
+            return
+        
+        # Normal mode - use log update
+        if has_static_output:
+            self.full_static_output += result['staticOutput']
+        
+        # Check if we need to clear terminal (output height >= terminal rows)
+        terminal_rows = getattr(self.options['stdout'], 'rows', 24)
+        if self.last_output_height >= terminal_rows:
+            # Clear terminal and write everything
+            clear_code = '\x1b[2J\x1b[H'  # Clear screen and move cursor to top
+            self.options['stdout'].write(clear_code + self.full_static_output + result['output'])
+            self.last_output = result['output']
+            self.last_output_height = result['outputHeight']
+            self.log.sync(result['output'])
+            
+            render_time = (time.perf_counter() - start_time) * 1000
+            if self.options.get('on_render'):
+                metrics = RenderMetrics(render_time=render_time)
+                self.options['on_render'](metrics)
+            return
+        
+        # Normal incremental update
+        if has_static_output:
+            # Clear main output before writing static
+            self.log.clear()
+            self.options['stdout'].write(result['staticOutput'])
+            self.log(result['output'])
+        elif result['output'] != self.last_output:
+            # Only update if output changed
+            self.throttled_log(result['output'])
+        
+        self.last_output = result['output']
+        self.last_output_height = result['outputHeight']
+        
+        render_time = (time.perf_counter() - start_time) * 1000
         if self.options.get('on_render'):
             metrics = RenderMetrics(render_time=render_time)
             self.options['on_render'](metrics)
