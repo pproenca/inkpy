@@ -1,0 +1,64 @@
+---
+description: Use when design is set and you need a detailed implementation plan (Task list)
+globs: 
+---
+
+# Planning Workflow
+
+Use this workflow to create comprehensive implementation plans. Assume the implementer has zero context.
+
+## When to Use
+
+- After brainstorming/design is complete
+- Before writing code for complex features
+- When you need a step-by-step guide for implementation
+
+## Workflow Steps
+
+### 1. External Docs (Optional)
+- Offer to search external docs (using Context7 if available) for libraries involved.
+
+### 2. Project Detection
+- Detect stack (Python/Node/etc.) and framework (FastAPI/React/etc.).
+- Identify relevant `@docs/cursor-skills/` to reference in the plan.
+
+### 3. Create Plan Document
+- Create file: `docs/plans/YYYY-MM-DD-<feature>.md`
+- **Header**:
+  ```markdown
+  # [Feature] Implementation Plan
+  > Goal: [One sentence summary]
+  > Tech Stack: [List]
+  ```
+
+### 4. Define Tasks (Bite-Sized)
+- Break work into tasks (approx. 20 mins each).
+- **Format**:
+  ```markdown
+  ### Task N: [Name]
+  **Files**: [List]
+  **Step 1**: Write failing test
+  **Step 2**: Implement minimal code
+  **Step 3**: Verify pass
+  ```
+- **Granularity**: Each task must be verifiable (test pass, build success).
+
+### 5. Diagrams (Optional)
+- Offer to generate Mermaid diagrams if architecture is complex.
+
+### 6. Handoff
+- Ask user: "Plan saved. Ready to execute?"
+- If yes → Trigger `execution-workflow.mdc`
+
+## Key Rules
+
+- **TDD First**: Plan MUST include "Write failing test" steps.
+- **Exact Paths**: Use full file paths, not descriptions.
+- **Verification**: Every task must end with a verification step.
+- **Reference Skills**: Link to specific skills in `docs/cursor-skills/` for complex patterns.
+
+## Tool Usage
+
+- `todo_write`: Track the planning phases (Research, Drafting, Review).
+- `write`: Create the plan markdown file.
+- `ask_question`: Confirm plan sections and diagrams.

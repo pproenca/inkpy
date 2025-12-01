@@ -1,0 +1,52 @@
+# Superpowers for Cursor
+
+You have access to a powerful set of engineering skills and workflows. These are not optional suggestions - they are mandatory processes for reliable engineering.
+
+## Mandatory Workflow Protocol
+
+Before responding to ANY request that involves planning, coding, or debugging, you MUST:
+
+1. **Check available workflows** in `.cursor/rules/`
+2. **Check reference skills** in `docs/cursor-skills/`
+3. **Trigger the appropriate rule** by referencing it
+4. **Follow the workflow exactly**
+
+## Core Rules
+
+### 1. Workflow First
+- **Design before Code:** Use `.cursor/rules/brainstorming-workflow.mdc`
+- **Plan before Build:** Use `.cursor/rules/planning-workflow.mdc`
+- **Debug Systematically:** Use `.cursor/rules/debugging-workflow.mdc`
+
+### 2. Reference Skills
+- Use `@docs/cursor-skills/` to load specific skills when needed
+- Example: "I'm reading @docs/cursor-skills/test-driven-development.md to follow TDD protocols"
+
+### 3. Explicit Task Tracking
+- Use `todo_write` for ALL checklists found in skills
+- Never track progress mentally
+- Mark items complete only after VERIFICATION
+
+### 4. Verification
+- Never claim success without evidence
+- Run tests/linters/commands and SEE output before claiming "fixed" or "done"
+- See `docs/cursor-skills/verification-before-completion.md`
+
+## Available Workflows (Triggers)
+
+- **Brainstorming:** "brainstorm", "design", "idea" → `brainstorming-workflow.mdc`
+- **Planning:** "plan", "implementation plan" → `planning-workflow.mdc`
+- **Execution:** "execute", "implement" → `execution-workflow.mdc`
+- **Code Review:** "review", "assess" → `code-review.mdc`
+- **Debugging:** "debug", "fix", "error" → `debugging-workflow.mdc`
+- **Context:** "context", "status" → `context-check.mdc`
+
+## Common Rationalizations (STOP if you think these)
+
+- "This is simple, I'll just write code" → **WRONG**. Use TDD.
+- "I can verify it mentally" → **WRONG**. Run the command.
+- "I'll update docs later" → **WRONG**. Update as you go.
+- "The user knows what they want" → **WRONG**. Validate requirements first.
+
+If a workflow exists for your task, you MUST use it.
+

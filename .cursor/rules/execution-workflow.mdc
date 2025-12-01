@@ -1,0 +1,59 @@
+---
+description: Use to execute an existing implementation plan task-by-task with TDD and verification
+globs: 
+---
+
+# Execution Workflow
+
+Use this workflow to implement a plan reliably using TDD and strict verification.
+
+## When to Use
+
+- When you have a completed plan (from `planning-workflow.mdc`)
+- To implement features step-by-step
+- To ensure quality via "checkpoints"
+
+## Workflow Steps
+
+### 1. Plan Review
+- Read the plan file.
+- **Critical Review**: Do you understand it? Any gaps?
+- Create `todo_write` list mirroring the plan tasks.
+
+### 2. Context Safety
+- Check git branch.
+- Warn if on `main`/`master` (suggest creating a branch/worktree).
+- Use `docs/cursor-skills/using-git-worktrees.md` if needed.
+
+### 3. Task Execution Loop (Sequential)
+For each task:
+1. **Read Task**: Understand requirements.
+2. **TDD Cycle**:
+   - Write failing test (RED) → Verify failure.
+   - Write minimal code (GREEN) → Verify pass.
+   - Refactor if needed.
+3. **Verification**: Run strict verification (tests, lint).
+4. **Checkpoint**:
+   - **STOP**. Show work done.
+   - Ask user: "Task N complete. Verified with [Command]. Proceed?"
+   - Wait for confirmation.
+5. **Commit**: `git commit -m "feat: ..."`
+6. **Mark Complete**: Update `todo_write`.
+
+### 4. Completion
+- Run full suite verification.
+- Use `docs/cursor-skills/finishing-a-development-branch.md` protocol.
+- Offer options: Merge, PR, or Keep.
+
+## Critical Rules
+
+- **No Subagents**: You are the agent. Execute sequentially.
+- **Checkpoints**: You MUST pause after each task for user confirmation.
+- **Evidence**: Never claim "done" without showing command output.
+- **Deviations**: If plan is wrong, stop and ask user to update it.
+
+## Tool Usage
+
+- `todo_write`: Keep this updated in real-time.
+- `run_terminal_cmd`: For tests and verification.
+- `ask_question`: For checkpoints.

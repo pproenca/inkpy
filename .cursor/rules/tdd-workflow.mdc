@@ -1,0 +1,34 @@
+---
+description: Use for implementing any code changes (features or bugfixes)
+globs: 
+---
+
+# TDD Workflow
+
+Use this workflow for all code changes.
+
+## Reference
+See `docs/cursor-skills/test-driven-development.md` for the full protocol.
+
+## Workflow Steps
+
+1. **RED**: Write a failing test.
+   - Verify it fails for the right reason.
+   - `run_terminal_cmd` to confirm failure.
+
+2. **GREEN**: Write minimal code to pass.
+   - Don't over-engineer.
+   - `run_terminal_cmd` to confirm pass.
+
+3. **REFACTOR**: Clean up.
+   - Verify tests still pass.
+
+## Critical Rules
+- **Test First**: Code without a failing test is forbidden.
+- **Watch Failure**: You must see the test fail.
+- **Minimal Code**: Only write what the test requires.
+
+## Anti-Patterns (Avoid)
+- Testing mocks instead of real behavior.
+- Writing tests after code.
+- Skipping verification steps.

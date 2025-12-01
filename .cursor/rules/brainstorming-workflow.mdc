@@ -1,0 +1,52 @@
+---
+description: Use for idea generation, design discussions, and architectural refinement before coding
+globs: 
+---
+
+# Brainstorming Workflow
+
+Use this workflow to turn ideas into fully formed designs through collaborative questioning, exploration, and incremental validation.
+
+## When to Use
+
+- Designing new features
+- Refining vague requirements
+- Exploring architectural options
+- **Before** writing any implementation code
+
+## Workflow Steps
+
+### Phase 1: Understanding
+
+1. **Context Check**: Read relevant files/docs to understand existing system.
+2. **Scope & Constraints**: Ask questions to clarify:
+   - MVP vs Production-ready?
+   - Performance/Security constraints?
+   - Target users?
+
+### Phase 2: Exploring Approaches
+
+1. **Propose Options**: Outline 2-3 approaches with trade-offs.
+2. **Recommendation**: State your preferred approach and why.
+3. **Selection**: Ask user to choose (using `ask_question` or text).
+
+### Phase 3: Detailed Design
+
+1. **Present in Sections**: Break design into 200-300 word chunks.
+2. **Validate Incrementally**: Stop after each section to ask "Does this look right?"
+3. **Refine**: Adjust based on feedback before moving to next section.
+
+### Phase 4: Documentation & Handoff
+
+1. **Document**: Write design to `docs/plans/YYYY-MM-DD-<topic>-design.md` (optional but recommended).
+2. **Transition**: Ask if ready to move to implementation planning.
+
+## Tool Usage
+
+- Use `ask_question` for major decisions (Scope, Approach, Next Steps).
+- Use `todo_write` to track progress through the 4 phases.
+
+## Example Trigger
+
+User: "I have an idea for a new caching system"
+Response: "I'll use the brainstorming workflow to refine this. First, let me understand the scope..."

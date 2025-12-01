@@ -1,0 +1,32 @@
+---
+description: Use when fixing bugs, errors, or unexpected behavior
+globs: 
+---
+
+# Debugging Workflow
+
+Use this workflow to systematically fix bugs without guessing.
+
+## Reference
+See `docs/cursor-skills/systematic-debugging.md` for the full protocol.
+
+## Workflow Steps
+
+### Phase 1: Investigation (Mandatory)
+1. **Read Errors**: Don't guess. Read the stack trace.
+2. **Reproduce**: Create a reproduction case if possible.
+3. **Trace**: Use `docs/cursor-skills/root-cause-tracing.md` if deep in stack.
+
+### Phase 2: Diagnosis
+1. **Hypothesis**: State "I think X is causing Y".
+2. **Verify**: Add logging or check variables to confirm.
+
+### Phase 3: Fix
+1. **TDD**: Write a failing test first (see `tdd-workflow.mdc`).
+2. **Implement**: Fix the root cause (not the symptom).
+3. **Verify**: Run the test.
+
+## Critical Rules
+- **No Blind Fixes**: Never propose a fix without evidence.
+- **No Shotgun Debugging**: Change one thing at a time.
+- **Verify**: Run tests after every change.
