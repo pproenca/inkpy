@@ -3,7 +3,6 @@ Tests for ANSI-aware text wrapping and truncation.
 
 Following TDD: Write failing test first, then implement.
 """
-import pytest
 from inkpy.wrap_text import wrap_text
 
 

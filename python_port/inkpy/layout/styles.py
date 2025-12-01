@@ -4,7 +4,7 @@ Style application module for Yoga nodes.
 Ports the style system from Ink's styles.ts to Python, applying
 CSS-like styles to Yoga layout nodes.
 """
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any
 import poga
 from .yoga_node import YogaNode
 

@@ -6,9 +6,8 @@ import threading
 import select
 import termios
 import tty
-from typing import Optional, TextIO, Callable, Dict, Any, List
+from typing import Optional, TextIO, Callable, Dict, Any
 from reactpy import component, html, use_state, use_effect
-from reactpy.core.hooks import use_context
 from inkpy.components.app_context import AppContext
 from inkpy.components.stdin_context import StdinContext
 from inkpy.components.stdout_context import StdoutContext

@@ -3,10 +3,7 @@ Tests for measure function application on Poga nodes.
 
 Following TDD: Write failing test first, then implement.
 """
-import pytest
-from inkpy.dom import create_node, DOMElement
-from inkpy.layout.yoga_node import YogaNode
-import poga
+from inkpy.dom import create_node
 
 
 def test_ink_text_node_has_measure_function():

@@ -3,7 +3,6 @@ Tests for EventEmitter class.
 
 Following TDD: Write failing test first, then implement.
 """
-import pytest
 from inkpy.input.event_emitter import EventEmitter
 
 

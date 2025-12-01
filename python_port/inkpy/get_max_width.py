@@ -4,7 +4,6 @@ Get Max Width - Calculate maximum content width for a Yoga node.
 Ported from: src/get-max-width.ts
 """
 from inkpy.layout.yoga_node import YogaNode
-import poga
 from poga.libpoga_capi import YGNodeLayoutGetPadding, YGNodeLayoutGetBorder, YGEdge
 
 

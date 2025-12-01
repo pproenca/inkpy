@@ -2,12 +2,8 @@
 Tests for Box component with ARIA and BackgroundContext support
 """
 import pytest
-import asyncio
-from reactpy import component, html
 from reactpy.core.layout import Layout
 from inkpy.components.box import Box
-from inkpy.components.accessibility_context import accessibility_context
-from inkpy.components.background_context import background_context
 
 
 def _find_div_in_vdom(vdom):

@@ -1,8 +1,6 @@
 # test_use_app.py
-import pytest
 from reactpy import component, html
 from inkpy.hooks.use_app import use_app
-from inkpy.components.app_context import AppContext
 
 def test_use_app_provides_exit():
     """Test that useApp hook provides exit function"""

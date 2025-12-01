@@ -1,4 +1,3 @@
-import pytest
 from inkpy.hooks.use_stdin import use_stdin
 
 

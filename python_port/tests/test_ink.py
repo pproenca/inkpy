@@ -1,9 +1,7 @@
 # test_ink.py
-import pytest
 import io
 from inkpy.ink import Ink
 from inkpy.components.text import Text
-from inkpy.components.box import Box
 from reactpy import component
 
 class MockStdout:

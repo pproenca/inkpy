@@ -3,7 +3,7 @@ Text wrapping module - wraps text to fit within max width
 
 Uses ANSI tokenizer for proper ANSI-aware wrapping and truncation.
 """
-from typing import Dict, Optional
+from typing import Dict
 import re
 from .renderer.ansi_tokenize import string_width, slice_ansi, tokenize_ansi
 

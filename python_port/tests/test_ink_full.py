@@ -1,12 +1,9 @@
 """
 Comprehensive tests for Ink class with all features
 """
-import pytest
 import io
 import os
-import signal
-import time
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 from inkpy.ink import Ink
 
 

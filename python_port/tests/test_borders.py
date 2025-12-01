@@ -1,4 +1,3 @@
-import pytest
 from inkpy.renderer.borders import get_border_chars, render_border
 from inkpy.renderer.output import Output
 

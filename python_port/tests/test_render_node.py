@@ -1,4 +1,3 @@
-import pytest
 from inkpy.renderer.render_node import render_node_to_output
 from inkpy.renderer.output import Output
 from inkpy.layout.yoga_node import YogaNode

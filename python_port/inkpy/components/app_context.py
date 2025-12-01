@@ -1,7 +1,7 @@
 """
 AppContext module - ReactPy context for app-level functionality
 """
-from typing import Callable, Optional, Dict, Any
+from typing import Callable, Optional, Dict
 from reactpy.core.hooks import create_context
 
 # Default context value - dict with exit function

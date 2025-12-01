@@ -1,7 +1,6 @@
 """
 Tests for AccessibilityContext and BackgroundContext
 """
-import pytest
 
 
 def test_accessibility_context_default():

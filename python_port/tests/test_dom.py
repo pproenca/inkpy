@@ -1,5 +1,4 @@
 # test_dom.py
-import pytest
 from inkpy.dom import (
     create_node,
     create_text_node,
@@ -8,8 +7,6 @@ from inkpy.dom import (
     insert_before_node,
     set_attribute,
     set_style,
-    DOMElement,
-    TextNode,
 )
 
 def test_create_node():

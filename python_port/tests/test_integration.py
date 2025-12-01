@@ -1,7 +1,6 @@
 """
 Integration tests for InkPy - End-to-end testing of the full system
 """
-import pytest
 import io
 from reactpy import component, use_state
 from inkpy import render, Box, Text

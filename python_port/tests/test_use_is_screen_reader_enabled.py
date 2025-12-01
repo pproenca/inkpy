@@ -2,7 +2,6 @@
 Tests for use_is_screen_reader_enabled hook
 """
 import pytest
-import asyncio
 from reactpy import component
 from reactpy.core.layout import Layout
 from inkpy.hooks.use_is_screen_reader_enabled import use_is_screen_reader_enabled

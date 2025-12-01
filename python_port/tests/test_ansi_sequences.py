@@ -3,7 +3,6 @@ Tests for complete ANSI escape sequence support.
 
 Following TDD: Write failing test first, then implement.
 """
-import pytest
 from inkpy.renderer.ansi_tokenize import tokenize_ansi, string_width, slice_ansi
 
 

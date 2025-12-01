@@ -2,12 +2,10 @@
 Tests for Text component with inherited background support
 """
 import pytest
-import asyncio
-from reactpy import component, html
+from reactpy import component
 from reactpy.core.layout import Layout
 from inkpy.components.text import Text
 from inkpy.components.box import Box
-from inkpy.components.background_context import background_context
 
 
 def _find_span_in_vdom(vdom):

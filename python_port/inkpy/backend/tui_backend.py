@@ -1,7 +1,7 @@
 """
 TUI Backend - Bridges ReactPy VDOM to DOM node system
 """
-from typing import Any, Optional, Dict, List, Callable
+from typing import Any, Optional, Dict
 from reactpy.core.layout import Layout
 import poga
 from inkpy.dom import (

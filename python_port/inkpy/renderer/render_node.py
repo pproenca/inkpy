@@ -4,14 +4,13 @@ Render node to output module.
 Ports render-node-to-output functionality from Ink.
 Traverses the layout tree and renders nodes to the output buffer.
 """
-from typing import List, Optional, Callable, Dict, Any, Union
+from typing import List, Optional, Callable, Dict, Any
 from ..layout.yoga_node import YogaNode
 from ..layout.text_node import TextNode
-from ..dom import DOMElement, TextNode as DOMTextNode
+from ..dom import DOMElement
 from .output import Output
 from .background import render_background
 from .borders import render_border
-from .colorize import colorize
 from ..wrap_text import wrap_text
 
 OutputTransformer = Callable[[str, int], str]

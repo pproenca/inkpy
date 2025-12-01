@@ -3,7 +3,6 @@ Tests for ErrorOverview component enhancements.
 
 Following TDD: Write failing test first, then implement.
 """
-import pytest
 import os
 import tempfile
 from inkpy.components.error_overview import ErrorOverview, _cleanup_path, _get_code_excerpt, _parse_stack_line

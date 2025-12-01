@@ -4,7 +4,7 @@ useInput hook module.
 Ports use-input functionality from Ink.
 Provides a hook for handling user input in ReactPy components.
 """
-from typing import Callable, Optional
+from typing import Callable
 from reactpy import use_effect
 from .use_stdin import use_stdin
 from ..input.keypress import Key, parse_keypress, NON_ALPHANUMERIC_KEYS

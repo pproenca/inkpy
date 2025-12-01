@@ -1,7 +1,7 @@
 """
 useStdout hook module - provides access to stdout stream
 """
-from typing import Dict, Any, TextIO, Callable
+from typing import Dict, Any
 from reactpy.core.hooks import use_context
 from inkpy.components.stdout_context import StdoutContext
 

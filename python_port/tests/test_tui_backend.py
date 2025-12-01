@@ -1,5 +1,4 @@
 # test_tui_backend.py
-import pytest
 from reactpy import component, html
 from inkpy.backend.tui_backend import TUIBackend
 from inkpy.components.box import Box
@@ -44,7 +43,6 @@ def test_backend_creates_dom_nodes():
 
 def test_backend_applies_styles():
     """Test backend applies styles to DOM nodes"""
-    from reactpy import html
     
     # Test with direct VDOM (html.div returns VDOM dict)
     vdom = html.div({

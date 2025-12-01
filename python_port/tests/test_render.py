@@ -1,10 +1,7 @@
 # test_render.py
-import pytest
-import sys
 import io
 from inkpy.render import render
 from inkpy.components.text import Text
-from inkpy.components.box import Box
 from reactpy import component
 
 def test_render_returns_instance():

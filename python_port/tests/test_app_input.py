@@ -3,12 +3,8 @@ Tests for App component input loop functionality.
 
 Following TDD: Write failing test first, then implement.
 """
-import pytest
-import sys
 import io
-from unittest.mock import Mock, patch, MagicMock
-from inkpy.components.app import App
-from inkpy.input.event_emitter import EventEmitter
+from unittest.mock import Mock
 
 
 def test_app_creates_event_emitter():

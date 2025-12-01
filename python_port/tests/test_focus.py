@@ -1,14 +1,11 @@
 # test_focus.py
-import pytest
 from reactpy import component
 from inkpy.hooks.use_focus import use_focus
 from inkpy.hooks.use_focus_manager import use_focus_manager
 from inkpy.components.text import Text
-from inkpy.components.box import Box
 
 def test_focus_context_structure():
     """Test FocusContext provides required fields"""
-    from inkpy.components.focus_context import FocusContext
     
     # Verify context has correct structure
     context_value = {

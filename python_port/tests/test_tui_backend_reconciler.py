@@ -5,7 +5,7 @@ Following TDD: Write failing test first, then implement.
 """
 import pytest
 from inkpy.backend.tui_backend import TUIBackend, HostContext
-from inkpy.dom import DOMElement, TextNode
+from inkpy.dom import TextNode
 
 
 def test_host_context_tracks_is_inside_text():

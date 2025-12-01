@@ -3,7 +3,7 @@ Text component module.
 
 Enhanced Text component with full styling support and inherited background.
 """
-from typing import Optional, Union, Any
+from typing import Optional, Union
 from reactpy import component, html
 from reactpy.core.hooks import use_context
 from ..renderer.colorize import colorize

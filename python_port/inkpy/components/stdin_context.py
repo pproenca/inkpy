@@ -1,7 +1,7 @@
 """
 StdinContext module - ReactPy context for stdin stream access and input handling
 """
-from typing import TextIO, Callable, Dict, Any
+from typing import Dict, Any
 import sys
 from reactpy.core.hooks import create_context
 from inkpy.input.event_emitter import EventEmitter

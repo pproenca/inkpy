@@ -1,4 +1,3 @@
-import pytest
 from inkpy.renderer.output import Output
 
 

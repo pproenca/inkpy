@@ -4,7 +4,6 @@ Tests for log_update module - Terminal output management.
 Ported from: src/log-update.ts
 """
 import io
-import pytest
 from inkpy.log_update import create_log_update
 
 

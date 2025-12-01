@@ -3,14 +3,11 @@ Tests for ANSI escape sequences.
 
 Following TDD: Write failing test first, then implement.
 """
-import pytest
 from inkpy.log_update import (
     erase_lines,
     cursor_up,
     ERASE_LINE,
     CURSOR_NEXT_LINE,
-    HIDE_CURSOR,
-    SHOW_CURSOR,
     clear_terminal,
     cursor_down,
     cursor_left,

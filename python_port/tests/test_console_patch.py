@@ -3,11 +3,9 @@ Tests for console patching functionality.
 
 Following TDD: Write failing test first, then implement.
 """
-import pytest
 import sys
 import io
-from unittest.mock import patch, MagicMock
-from inkpy.console_patch import patch_console, restore_console
+from inkpy.console_patch import patch_console
 
 
 def test_patch_console_intercepts_stdout():

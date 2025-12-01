@@ -3,11 +3,9 @@ Tests for App component error boundary functionality.
 
 Following TDD: Write failing test first, then implement.
 """
-import pytest
 import io
 from reactpy import component
 from inkpy.components.app import App
-from inkpy.components.error_overview import ErrorOverview
 
 
 def test_app_catches_errors_in_children():

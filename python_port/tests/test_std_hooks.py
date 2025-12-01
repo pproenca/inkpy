@@ -1,5 +1,4 @@
 # test_std_hooks.py
-import pytest
 import io
 from reactpy import component
 from inkpy.hooks.use_stdout import use_stdout

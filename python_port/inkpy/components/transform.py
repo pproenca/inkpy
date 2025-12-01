@@ -6,7 +6,6 @@ Transform string representation of components before rendering.
 from typing import Optional, Callable, Any
 from reactpy import component, html
 from reactpy.core.hooks import use_context
-from .text import Text
 from .accessibility_context import accessibility_context
 
 

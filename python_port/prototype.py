@@ -1,7 +1,6 @@
 import asyncio
 from reactpy import component, html, use_effect, use_state
 from reactpy.core.layout import Layout
-from reactpy.core.hooks import create_context
 
 # Mock Yoga Node for now
 class YogaNode:

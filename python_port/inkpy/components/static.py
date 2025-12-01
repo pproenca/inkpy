@@ -4,7 +4,7 @@ Static component module.
 Static component renders output once and persists above dynamic content.
 """
 from typing import List, Optional, Callable, Any, Dict
-from reactpy import component, html, use_state, use_effect
+from reactpy import component, use_state, use_effect
 from .box import Box
 
 

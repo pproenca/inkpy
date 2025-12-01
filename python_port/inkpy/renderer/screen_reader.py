@@ -5,7 +5,7 @@ Ports render-node-to-screen-reader-output functionality from Ink.
 Renders DOM tree to accessible text output for screen readers.
 """
 from typing import Optional
-from ..dom import DOMElement, TextNode, squash_text_nodes
+from ..dom import DOMElement, squash_text_nodes
 
 
 def render_node_to_screen_reader_output(

@@ -3,10 +3,8 @@ Tests for TUIBackend hide/unhide instance methods.
 
 Following TDD: Write failing test first, then implement.
 """
-import pytest
 from inkpy.backend.tui_backend import TUIBackend
-from inkpy.dom import create_node, create_text_node, DOMElement, TextNode
-from inkpy.layout.yoga_node import YogaNode
+from inkpy.dom import create_node, create_text_node
 import poga
 
 

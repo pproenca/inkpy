@@ -1,7 +1,7 @@
 """
 FocusContext module - ReactPy context for focus management
 """
-from typing import Optional, Callable, Dict, Any
+from typing import Dict, Any
 from reactpy.core.hooks import create_context
 
 # Default context value - dict with focus management functions

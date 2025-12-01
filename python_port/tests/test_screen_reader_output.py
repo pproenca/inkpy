@@ -3,8 +3,7 @@ Tests for screen reader output mode.
 
 Following TDD: Write failing test first, then implement.
 """
-import pytest
-from inkpy.dom import create_node, DOMElement
+from inkpy.dom import create_node
 from inkpy.renderer.screen_reader import render_node_to_screen_reader_output
 
 

@@ -1,5 +1,3 @@
-import pytest
-from unittest.mock import Mock, patch
 from inkpy.hooks.use_input import use_input
 from inkpy.input.keypress import Key
 

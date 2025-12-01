@@ -1,5 +1,4 @@
-import pytest
-from inkpy.input.keypress import parse_keypress, Key
+from inkpy.input.keypress import parse_keypress
 
 
 def test_parse_arrow_keys():

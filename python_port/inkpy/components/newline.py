@@ -3,8 +3,7 @@ Newline component module.
 
 Adds one or more newline characters.
 """
-from typing import Optional
-from reactpy import component, html
+from reactpy import component
 from .text import Text
 
 

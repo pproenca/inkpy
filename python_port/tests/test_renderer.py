@@ -3,10 +3,8 @@ Tests for the renderer module.
 
 The renderer converts DOM trees to output strings.
 """
-import pytest
 from inkpy.renderer.renderer import renderer
 from inkpy.dom import create_node, create_text_node, append_child_node
-from inkpy.layout.styles import apply_styles
 
 
 def test_render_text():

@@ -2,11 +2,8 @@
 Tests for ErrorOverview component
 """
 import pytest
-import asyncio
 from reactpy.core.layout import Layout
 from inkpy.components.error_overview import ErrorOverview
-from inkpy.components.box import Box
-from inkpy.components.text import Text
 
 
 async def _render_component(comp):

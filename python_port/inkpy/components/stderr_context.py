@@ -1,7 +1,7 @@
 """
 StderrContext module - ReactPy context for stderr stream access
 """
-from typing import TextIO, Callable, Dict, Any
+from typing import Dict, Any
 import sys
 from reactpy.core.hooks import create_context
 

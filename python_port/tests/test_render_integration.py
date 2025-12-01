@@ -16,9 +16,8 @@ rendering that converts ReactPy VDOM to DOM and renders it.
 import pytest
 import io
 from reactpy import component, use_state
-from inkpy import render, Box, Text, Static
-from inkpy.hooks import use_focus, use_input
-from inkpy.input.keypress import Key
+from inkpy import render, Box, Text
+from inkpy.hooks import use_focus
 from inkpy.instances import instances
 
 

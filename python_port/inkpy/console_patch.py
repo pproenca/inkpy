@@ -7,7 +7,7 @@ clears the main output, renders output from the console method, and then
 rerenders the main output again.
 """
 import sys
-from typing import Callable, Optional, TextIO
+from typing import Callable, TextIO
 from io import StringIO
 
 

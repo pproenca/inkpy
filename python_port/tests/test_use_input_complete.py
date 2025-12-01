@@ -2,7 +2,6 @@
 Tests for complete useInput hook with ReactPy effects
 """
 import pytest
-import asyncio
 from reactpy import component
 from reactpy.core.layout import Layout
 from inkpy.hooks.use_input import use_input

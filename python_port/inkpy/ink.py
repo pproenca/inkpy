@@ -5,7 +5,7 @@ import os
 import signal
 import time
 import asyncio
-from typing import Optional, TextIO, Callable, Dict, Any
+from typing import Optional, TextIO, Callable
 from inkpy.dom import create_node, DOMElement
 from reactpy.core.layout import Layout
 from inkpy.backend.tui_backend import TUIBackend
