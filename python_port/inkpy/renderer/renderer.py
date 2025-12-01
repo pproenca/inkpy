@@ -6,7 +6,7 @@ Ports renderer.ts functionality from Ink.
 from typing import Dict, Any
 from ..dom import DOMElement
 from .output import Output
-from .render_node import render_node_to_output
+from .render_node import render_node_to_output, render_dom_node_to_output
 from .screen_reader import render_node_to_screen_reader_output
 
 
@@ -61,11 +61,11 @@ def renderer(node: DOMElement, is_screen_reader_enabled: bool) -> Dict[str, Any]
     )
     
     # Render main tree (skipping static elements)
-    render_node_to_output(
-        node.yoga_node,
+    # Use DOM tree traversal instead of Yoga tree for proper text rendering
+    render_dom_node_to_output(
+        node,
         output_buffer,
         skip_static=True,
-        style=node.style
     )
     
     # Render static node if present

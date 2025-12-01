@@ -350,7 +350,14 @@ class TUIBackend:
                 set_attribute(node, key, value)
         
         # Process children recursively
+        # ReactPy may store children in top-level "children" OR in "attributes.children"
         children = vdom.get("children", [])
+        
+        # Also check attributes.children (ReactPy stores props there)
+        attr_children = attributes.get("children")
+        if attr_children is not None and not children:
+            children = attr_children
+        
         if not isinstance(children, list):
             children = [children] if children is not None else []
         

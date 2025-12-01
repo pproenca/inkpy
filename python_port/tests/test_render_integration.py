@@ -73,11 +73,13 @@ def test_nested_box_text_components():
     @component
     def App():
         return Box(
-            Box(
-                Text("Inner"),
-                style={'padding': 1}
-            ),
-            Text("Outer"),
+            children=[
+                Box(
+                    children=Text("Inner"),
+                    style={'padding': 1}
+                ),
+                Text("Outer"),
+            ],
             style={'flexDirection': 'column'}
         )
     
@@ -163,10 +165,10 @@ def test_static_component_output():
     @component
     def App():
         return Box(
-            Static(
-                Text("Static Content")
-            ),
-            Text("Dynamic Content"),
+            children=[
+                Static(children=Text("Static Content")),
+                Text("Dynamic Content"),
+            ],
             style={'flexDirection': 'column'}
         )
     
@@ -181,10 +183,10 @@ def test_static_component_output():
     @component
     def AppUpdated():
         return Box(
-            Static(
-                Text("Static Content")
-            ),
-            Text("Updated Dynamic"),
+            children=[
+                Static(children=Text("Static Content")),
+                Text("Updated Dynamic"),
+            ],
             style={'flexDirection': 'column'}
         )
     

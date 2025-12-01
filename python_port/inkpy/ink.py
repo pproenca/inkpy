@@ -142,9 +142,52 @@ class Ink:
         
         self._layout = Layout(app_component)
         
-        # In debug mode, write directly
-        if self.options['debug']:
-            self._write_to_stdout("Hello, World!\n")
+        # Do initial synchronous render
+        self._do_initial_render()
+        
+        # Trigger render to output
+        self.on_render()
+    
+    def _do_initial_render(self):
+        """Do initial synchronous render to populate DOM tree"""
+        if self._layout is None:
+            return
+        
+        # Try to get existing event loop, or create a new one
+        try:
+            loop = asyncio.get_running_loop()
+            # Event loop is running - use thread pool
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(self._run_sync_render)
+                future.result(timeout=5.0)
+        except RuntimeError:
+            # No running event loop - create one and run
+            asyncio.run(self._async_initial_render())
+    
+    async def _async_initial_render(self):
+        """Async initial render to get VDOM and convert to DOM"""
+        if self._layout is None:
+            return
+        
+        async with self._layout:
+            # Get initial render
+            update = await self._layout.render()
+            vdom = update.get('model') if isinstance(update, dict) else getattr(update, 'model', None)
+            
+            if vdom:
+                # Convert VDOM to DOM
+                self._backend.vdom_to_dom(vdom, self.root_node)
+                self.calculate_layout()
+    
+    def _run_sync_render(self):
+        """Run async render in new event loop (for when main loop is running)"""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(self._async_initial_render())
+        finally:
+            loop.close()
     
     def calculate_layout(self):
         """Calculate Yoga layout for root node"""

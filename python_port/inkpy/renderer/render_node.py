@@ -4,15 +4,142 @@ Render node to output module.
 Ports render-node-to-output functionality from Ink.
 Traverses the layout tree and renders nodes to the output buffer.
 """
-from typing import List, Optional, Callable, Dict, Any
+from typing import List, Optional, Callable, Dict, Any, Union
 from ..layout.yoga_node import YogaNode
 from ..layout.text_node import TextNode
+from ..dom import DOMElement, TextNode as DOMTextNode
 from .output import Output
 from .background import render_background
 from .borders import render_border
 from .colorize import colorize
+from ..wrap_text import wrap_text
 
 OutputTransformer = Callable[[str, int], str]
+
+
+def render_dom_node_to_output(
+    node: DOMElement,
+    output: Output,
+    offset_x: float = 0,
+    offset_y: float = 0,
+    transformers: Optional[List[OutputTransformer]] = None,
+    skip_static: bool = False,
+) -> None:
+    """
+    Render a DOM node tree to the output buffer.
+    
+    This traverses the DOM tree (not Yoga tree) to access text content.
+    
+    Args:
+        node: Root DOM element node
+        output: Output buffer to write to
+        offset_x: X offset for absolute positioning
+        offset_y: Y offset for absolute positioning
+        transformers: List of text transformers to apply
+        skip_static: Whether to skip static elements
+    """
+    if transformers is None:
+        transformers = []
+    
+    # Skip static nodes if requested
+    if skip_static and getattr(node, 'internal_static', False):
+        return
+    
+    # Get layout from yoga node
+    if not node.yoga_node:
+        return
+    
+    layout = node.yoga_node.get_layout()
+    x = int(offset_x + layout.get('left', 0))
+    y = int(offset_y + layout.get('top', 0))
+    width = int(layout.get('width', 0))
+    height = int(layout.get('height', 0))
+    
+    style = node.style or {}
+    
+    # Render background
+    if style.get('backgroundColor'):
+        render_background(
+            output, x, y, width, height,
+            color=style['backgroundColor'],
+            borderLeft=bool(style.get('borderStyle') and style.get('borderLeft', True)),
+            borderRight=bool(style.get('borderStyle') and style.get('borderRight', True)),
+            borderTop=bool(style.get('borderStyle') and style.get('borderTop', True)),
+            borderBottom=bool(style.get('borderStyle') and style.get('borderBottom', True)),
+        )
+    
+    # Render border
+    if style.get('borderStyle'):
+        render_border(
+            output, x, y, width, height,
+            style=style['borderStyle'],
+            borderTop=style.get('borderTop', True),
+            borderBottom=style.get('borderBottom', True),
+            borderLeft=style.get('borderLeft', True),
+            borderRight=style.get('borderRight', True),
+            borderColor=style.get('borderColor'),
+        )
+    
+    # Build transformers list including node's internal_transform
+    node_transformers = list(transformers)
+    if hasattr(node, 'internal_transform') and node.internal_transform:
+        node_transformers.append(node.internal_transform)
+    
+    # Handle text nodes (ink-text)
+    if node.node_name == 'ink-text':
+        # Get text content from children
+        text = _squash_dom_text_nodes(node)
+        
+        if text:
+            # Apply text wrapping
+            wrap_type = style.get('textWrap', 'wrap')
+            max_width = width if width > 0 else float('inf')
+            text = wrap_text(text, max_width, wrap_type)
+            
+            # Apply transformers
+            if node_transformers:
+                lines = text.split('\n')
+                transformed_lines = []
+                for idx, line in enumerate(lines):
+                    transformed = line
+                    for transformer in node_transformers:
+                        transformed = transformer(transformed, idx)
+                    transformed_lines.append(transformed)
+                text = '\n'.join(transformed_lines)
+            
+            output.write(x, y, text, transformers=[])
+        return
+    
+    # Render children for container nodes
+    for child in node.child_nodes:
+        if isinstance(child, DOMElement):
+            render_dom_node_to_output(
+                child,
+                output,
+                offset_x=x,
+                offset_y=y,
+                transformers=node_transformers,
+                skip_static=skip_static,
+            )
+
+
+def _squash_dom_text_nodes(node: DOMElement) -> str:
+    """
+    Get combined text content from DOM text node children.
+    
+    Args:
+        node: DOM element with text children
+        
+    Returns:
+        Combined text string
+    """
+    text = ''
+    for child in node.child_nodes:
+        if hasattr(child, 'node_value') and child.node_value:
+            text += child.node_value
+        elif isinstance(child, DOMElement) and child.node_name in ('ink-text', 'ink-virtual-text'):
+            text += _squash_dom_text_nodes(child)
+    return text
 
 
 def squash_text_nodes(node: YogaNode) -> str:

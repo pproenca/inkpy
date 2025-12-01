@@ -294,34 +294,26 @@ def App(
         'focus': focus,
     }
     
-    # Provide all contexts - ReactPy contexts are used as components
+    # Provide all contexts - ReactPy contexts use positional children argument
+    # Build from innermost to outermost
+    inner_content = ErrorOverview(error) if error else children
+    
     return html.div(
         AppContext(
-            value=app_context_value,
-            children=[
-                StdinContext(
-                    value=stdin_context_value,
-                    children=[
-                        StdoutContext(
-                            value=stdout_context_value,
-                            children=[
-                                StderrContext(
-                                    value=stderr_context_value,
-                                    children=[
-                                FocusContext(
-                                    value=focus_context_value,
-                                    children=[
-                                        # Error boundary: show ErrorOverview if error, otherwise show children
-                                        ErrorOverview(error) if error else children
-                                    ]
-                                )
-                                    ]
-                                )
-                            ]
-                        )
-                    ]
-                )
-            ]
+            StdinContext(
+                StdoutContext(
+                    StderrContext(
+                        FocusContext(
+                            inner_content,
+                            value=focus_context_value
+                        ),
+                        value=stderr_context_value
+                    ),
+                    value=stdout_context_value
+                ),
+                value=stdin_context_value
+            ),
+            value=app_context_value
         )
     )
 

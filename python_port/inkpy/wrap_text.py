@@ -22,6 +22,12 @@ def wrap_text(text: str, max_width: float, wrap_type: str = 'wrap') -> str:
     Returns:
         Wrapped or truncated text
     """
+    import math
+    
+    # Handle NaN and infinite values
+    if math.isnan(max_width) or math.isinf(max_width):
+        return text
+    
     max_width_int = int(max_width)
     cache_key = f"{text}{max_width_int}{wrap_type}"
     

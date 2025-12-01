@@ -278,7 +278,7 @@ def styled_chars_to_string(styled_chars: List[Dict[str, Any]]) -> str:
             # Apply new styles
             for style in styles:
                 if style:  # Only add non-empty styles
-                result.append(style)
+                    result.append(style)
             
             last_styles = styles.copy()
         
