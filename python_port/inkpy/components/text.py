@@ -8,6 +8,7 @@ from reactpy import component, html
 from reactpy.core.hooks import use_context
 from ..renderer.colorize import colorize
 from .background_context import background_context
+from .accessibility_context import accessibility_context
 
 
 def _apply_text_styles(
@@ -84,6 +85,8 @@ def Text(
     inverse: bool = False,
     wrap: str = 'wrap',
     style: Optional[dict] = None,
+    aria_label: Optional[str] = None,
+    aria_hidden: bool = False,
     **kwargs
 ):
     """
@@ -101,8 +104,18 @@ def Text(
         inverse: Inverse colors
         wrap: Text wrap mode ('wrap', 'truncate-end', 'truncate-middle', 'truncate-start')
         style: Additional style dictionary
+        aria_label: Label for screen readers
+        aria_hidden: Hide element from screen readers
         **kwargs: Additional props
     """
+    # Get accessibility context
+    try:
+        accessibility_ctx = use_context(accessibility_context)
+        is_screen_reader_enabled = accessibility_ctx.get('is_screen_reader_enabled', False)
+    except RuntimeError:
+        # Context not available (e.g., in tests without Layout)
+        is_screen_reader_enabled = False
+    
     # Get inherited background color from context
     try:
         inherited_background = use_context(background_context)
@@ -112,6 +125,20 @@ def Text(
     
     # Use explicit backgroundColor if provided, otherwise use inherited
     effective_background = backgroundColor if backgroundColor is not None else inherited_background
+    
+    # Handle screen reader mode
+    # If screen reader enabled and aria-hidden, return None
+    if is_screen_reader_enabled and aria_hidden:
+        return None
+    
+    # Determine children: use aria-label if screen reader enabled and aria-label provided
+    children_or_aria_label = (
+        aria_label if (is_screen_reader_enabled and aria_label) else children
+    )
+    
+    # Return None if no content
+    if children_or_aria_label is None:
+        return None
     
     if style is None:
         style = {}
@@ -140,9 +167,10 @@ def Text(
     }
     
     # Store transform in internal_transform (will be used by renderer)
+    # Use children_or_aria_label for rendering
     return html.span({
         "style": final_style,
-        "children": children,
+        "children": children_or_aria_label,
         "internal_transform": transform,
         **kwargs
     })
