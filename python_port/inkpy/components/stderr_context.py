@@ -1,12 +1,12 @@
 """
 StderrContext module - ReactPy context for stderr stream access
 """
-from typing import TextIO, Callable, Dict
+from typing import TextIO, Callable, Dict, Any
 import sys
 from reactpy.core.hooks import create_context
 
 # Default context value - dict with stderr stream and write function
-_default_value: Dict[str, any] = {
+_default_value: Dict[str, Any] = {
     'stderr': sys.stderr,
     'write': lambda data: sys.stderr.write(data)
 }

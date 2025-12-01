@@ -2,7 +2,7 @@
 useFocus hook module - provides focus management for components
 """
 import random
-from typing import Optional, Dict, Callable
+from typing import Optional, Dict, Callable, Any
 from reactpy import use_effect, use_memo
 from reactpy.core.hooks import use_context
 from inkpy.components.focus_context import FocusContext
@@ -12,7 +12,7 @@ def use_focus(
     is_active: bool = True,
     auto_focus: bool = False,
     id: Optional[str] = None
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """
     Hook that makes a component focusable.
     

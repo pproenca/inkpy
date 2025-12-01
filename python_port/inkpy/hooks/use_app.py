@@ -1,10 +1,11 @@
 """
 useApp hook module - provides access to app-level functionality
 """
+from typing import Dict, Callable, Optional
 from reactpy.core.hooks import use_context
 from inkpy.components.app_context import AppContext
 
-def use_app():
+def use_app() -> Dict[str, Callable[[Optional[Exception]], None]]:
     """
     Hook that exposes a method to manually exit the app (unmount).
     

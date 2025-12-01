@@ -1,11 +1,11 @@
 """
 useFocusManager hook module - provides focus management control
 """
-from typing import Dict, Callable
+from typing import Dict, Callable, Any
 from reactpy.core.hooks import use_context
 from inkpy.components.focus_context import FocusContext
 
-def use_focus_manager() -> Dict[str, Callable]:
+def use_focus_manager() -> Dict[str, Callable[..., Any]]:
     """
     Hook that exposes methods to enable/disable focus management
     or manually switch focus between components.

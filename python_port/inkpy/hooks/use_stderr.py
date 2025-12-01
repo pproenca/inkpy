@@ -1,10 +1,11 @@
 """
 useStderr hook module - provides access to stderr stream
 """
+from typing import Dict, Any
 from reactpy.core.hooks import use_context
 from inkpy.components.stderr_context import StderrContext
 
-def use_stderr():
+def use_stderr() -> Dict[str, Any]:
     """
     Hook that provides access to stderr stream and write function.
     
