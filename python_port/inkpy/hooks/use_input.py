@@ -47,8 +47,12 @@ def use_input(
     def setup_raw_mode():
         if not is_active:
             return None
-        stdin_ctx.set_raw_mode(True)
-        return lambda: stdin_ctx.set_raw_mode(False)
+        # Access context as dict
+        set_raw_mode = stdin_ctx.get('set_raw_mode') if isinstance(stdin_ctx, dict) else getattr(stdin_ctx, 'set_raw_mode', None)
+        if set_raw_mode:
+            set_raw_mode(True)
+            return lambda: set_raw_mode(False)
+        return None
     
     use_effect(setup_raw_mode, dependencies=[is_active])
     
@@ -95,12 +99,22 @@ def _setup_input_listener(stdin_ctx, input_handler: Callable[[str, Key], None]):
             key.shift = True
         
         # Call handler (skip if Ctrl+C and exitOnCtrlC is enabled)
-        internal_exit_on_ctrl_c = getattr(stdin_ctx, 'internal_exitOnCtrlC', True)
+        # Access context as dict
+        if isinstance(stdin_ctx, dict):
+            internal_exit_on_ctrl_c = stdin_ctx.get('internal_exitOnCtrlC', True)
+        else:
+            internal_exit_on_ctrl_c = getattr(stdin_ctx, 'internal_exitOnCtrlC', True)
+        
         if not (input_str == 'c' and key.ctrl) or not internal_exit_on_ctrl_c:
             input_handler(input_str, key)
     
     # Set up event listener if event emitter is available
-    event_emitter = getattr(stdin_ctx, 'internal_eventEmitter', None)
+    # Access context as dict
+    if isinstance(stdin_ctx, dict):
+        event_emitter = stdin_ctx.get('internal_eventEmitter')
+    else:
+        event_emitter = getattr(stdin_ctx, 'internal_eventEmitter', None)
+    
     if event_emitter:
         if hasattr(event_emitter, 'on'):
             event_emitter.on('input', handle_data)
