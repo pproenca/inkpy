@@ -32,3 +32,6 @@ htmlcov/
 
 # Build artifacts
 *.log
+
+# Git worktrees
+.worktrees/
