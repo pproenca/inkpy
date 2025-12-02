@@ -75,6 +75,7 @@ tests/test_ansi_escapes.py
 tests/test_ansi_sequences.py
 tests/test_ansi_tokenize.py
 tests/test_app_error_boundary.py
+tests/test_app_hooks.py
 tests/test_app_input.py
 tests/test_background.py
 tests/test_borders.py
@@ -89,6 +90,8 @@ tests/test_error_overview.py
 tests/test_error_overview_enhancement.py
 tests/test_event_emitter.py
 tests/test_focus.py
+tests/test_focus_input_integration.py
+tests/test_function_keys_integration.py
 tests/test_get_max_width.py
 tests/test_ink.py
 tests/test_ink_full.py
@@ -100,15 +103,19 @@ tests/test_log_update.py
 tests/test_measure_element.py
 tests/test_measure_function.py
 tests/test_measure_text_ansi.py
+tests/test_modifier_keys_integration.py
 tests/test_output.py
+tests/test_rapid_input_rendering.py
 tests/test_reconciler_integration.py
 tests/test_render.py
 tests/test_render_integration.py
 tests/test_render_node.py
 tests/test_renderer.py
 tests/test_screen_reader_output.py
+tests/test_static_component.py
 tests/test_std_hooks.py
 tests/test_styles.py
+tests/test_tab_focus_integration.py
 tests/test_text_background.py
 tests/test_text_measurement.py
 tests/test_text_screen_reader.py
@@ -121,6 +128,7 @@ tests/test_tui_backend_reconciler.py
 tests/test_use_app.py
 tests/test_use_input.py
 tests/test_use_input_complete.py
+tests/test_use_input_handle_data.py
 tests/test_use_is_screen_reader_enabled.py
 tests/test_use_stdin.py
 tests/test_wrap_text_ansi.py
