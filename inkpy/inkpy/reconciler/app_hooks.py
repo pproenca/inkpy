@@ -65,7 +65,14 @@ def _start_input_thread():
     
     def read_input():
         stdin = _app_state['stdin']
-        fd = stdin.fileno() if hasattr(stdin, 'fileno') else None
+        
+        # Get file descriptor - handle pytest's captured stdin which has fileno()
+        # but raises UnsupportedOperation when called
+        try:
+            fd = stdin.fileno() if hasattr(stdin, 'fileno') else None
+        except (OSError, IOError):
+            # stdin is a pseudo-file (pytest capture, StringIO, etc.)
+            fd = None
         
         if fd is None:
             return
