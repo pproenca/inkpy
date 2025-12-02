@@ -211,6 +211,9 @@ class Ink:
         )
         self.root_node.on_immediate_render = self.on_render
         
+        # Calculate layout AFTER setting root_node
+        self.calculate_layout()
+        
         # Render to terminal
         self.on_render()
     
