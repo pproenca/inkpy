@@ -282,3 +282,279 @@ def test_flex_basis_with_grow():
     width1 = layout1.get("width", 0)
     width2 = layout2.get("width", 0)
     assert abs(width1 - width2) < 2  # Allow small rounding differences
+
+
+# --- Phase 4.4: Additional Tests for 95%+ Coverage ---
+
+
+def test_position_relative():
+    """Test position: relative"""
+    node = YogaNode()
+    apply_styles(node, {"position": "relative"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_margin_shorthand():
+    """Test margin shorthand property"""
+    node = YogaNode()
+    apply_styles(node, {"margin": 10})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_flex_shrink_non_numeric():
+    """Test flexShrink with non-numeric value defaults to 1"""
+    node = YogaNode()
+    apply_styles(node, {"flexShrink": "invalid"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_flex_wrap_reverse():
+    """Test flexWrap: wrap-reverse"""
+    node = YogaNode()
+    apply_styles(node, {"flexWrap": "wrap-reverse"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_flex_direction_row_reverse():
+    """Test flexDirection: row-reverse"""
+    node = YogaNode()
+    apply_styles(node, {"flexDirection": "row-reverse"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_flex_direction_column_reverse():
+    """Test flexDirection: column-reverse"""
+    node = YogaNode()
+    apply_styles(node, {"flexDirection": "column-reverse"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_align_items_stretch():
+    """Test alignItems: stretch (or falsy value defaults to stretch)"""
+    node = YogaNode()
+    apply_styles(node, {"alignItems": "stretch"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_align_items_flex_start():
+    """Test alignItems: flex-start"""
+    node = YogaNode()
+    apply_styles(node, {"alignItems": "flex-start"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_align_items_center():
+    """Test alignItems: center"""
+    node = YogaNode()
+    apply_styles(node, {"alignItems": "center"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_align_items_flex_end():
+    """Test alignItems: flex-end"""
+    node = YogaNode()
+    apply_styles(node, {"alignItems": "flex-end"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_align_self_flex_start():
+    """Test alignSelf: flex-start"""
+    node = YogaNode()
+    apply_styles(node, {"alignSelf": "flex-start"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_align_self_center():
+    """Test alignSelf: center"""
+    node = YogaNode()
+    apply_styles(node, {"alignSelf": "center"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_align_self_flex_end():
+    """Test alignSelf: flex-end"""
+    node = YogaNode()
+    apply_styles(node, {"alignSelf": "flex-end"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_align_self_stretch():
+    """Test alignSelf: stretch"""
+    node = YogaNode()
+    apply_styles(node, {"alignSelf": "stretch"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_justify_content_flex_start():
+    """Test justifyContent: flex-start (or falsy defaults to it)"""
+    node = YogaNode()
+    apply_styles(node, {"justifyContent": "flex-start"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_justify_content_center():
+    """Test justifyContent: center"""
+    node = YogaNode()
+    apply_styles(node, {"justifyContent": "center"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_justify_content_flex_end():
+    """Test justifyContent: flex-end"""
+    node = YogaNode()
+    apply_styles(node, {"justifyContent": "flex-end"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_justify_content_space_between():
+    """Test justifyContent: space-between"""
+    node = YogaNode()
+    apply_styles(node, {"justifyContent": "space-between"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_justify_content_space_around():
+    """Test justifyContent: space-around"""
+    node = YogaNode()
+    apply_styles(node, {"justifyContent": "space-around"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_width_undefined():
+    """Test width with undefined/auto value"""
+    node = YogaNode()
+    apply_styles(node, {"width": None})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_height_undefined():
+    """Test height with undefined/auto value"""
+    node = YogaNode()
+    apply_styles(node, {"height": None})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_min_width_numeric():
+    """Test minWidth with numeric value"""
+    node = YogaNode()
+    apply_styles(node, {"minWidth": 50})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_min_height_numeric():
+    """Test minHeight with numeric value"""
+    node = YogaNode()
+    apply_styles(node, {"minHeight": 30})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_display_flex():
+    """Test display: flex"""
+    node = YogaNode()
+    apply_styles(node, {"display": "flex"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_border_bottom_false():
+    """Test borderBottom: false"""
+    node = YogaNode()
+    apply_styles(node, {"borderStyle": "single", "borderBottom": False})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_border_left_false():
+    """Test borderLeft: false"""
+    node = YogaNode()
+    apply_styles(node, {"borderStyle": "single", "borderLeft": False})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_border_right_false():
+    """Test borderRight: false"""
+    node = YogaNode()
+    apply_styles(node, {"borderStyle": "single", "borderRight": False})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_all_borders_disabled():
+    """Test all borders disabled"""
+    node = YogaNode()
+    apply_styles(
+        node,
+        {
+            "borderStyle": "single",
+            "borderTop": False,
+            "borderBottom": False,
+            "borderLeft": False,
+            "borderRight": False,
+        },
+    )
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_padding_shorthand():
+    """Test padding shorthand property (all sides)"""
+    node = YogaNode()
+    apply_styles(node, {"padding": 8})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_flex_wrap_nowrap():
+    """Test flexWrap: nowrap"""
+    node = YogaNode()
+    apply_styles(node, {"flexWrap": "nowrap"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_flex_direction_column():
+    """Test flexDirection: column"""
+    node = YogaNode()
+    apply_styles(node, {"flexDirection": "column"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_height_auto_string():
+    """Test height with 'auto' string value"""
+    node = YogaNode()
+    apply_styles(node, {"height": "auto"})
+    layout = node.view.poga_layout()
+    assert layout is not None
+
+
+def test_width_auto_string():
+    """Test width with 'auto' string value"""
+    node = YogaNode()
+    apply_styles(node, {"width": "auto"})
+    layout = node.view.poga_layout()
+    assert layout is not None

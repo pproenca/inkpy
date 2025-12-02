@@ -67,3 +67,176 @@ def test_render_returns_proper_structure():
     assert "output" in result
     assert "outputHeight" in result
     assert "staticOutput" in result
+
+
+# --- Phase 4.2: Additional Tests for 90%+ Coverage ---
+
+
+def test_render_no_yoga_node():
+    """Test rendering a node without yoga_node returns empty output"""
+    root = create_node("ink-root")
+    root.yoga_node = None  # Remove yoga node
+
+    result = renderer(root, is_screen_reader_enabled=False)
+
+    assert result["output"] == ""
+    assert result["outputHeight"] == 0
+    assert result["staticOutput"] == ""
+
+
+def test_render_screen_reader_mode():
+    """Test rendering in screen reader mode"""
+    root = create_node("ink-root")
+    text_elem = create_node("ink-text")
+    text_node = create_text_node("Accessible text")
+
+    append_child_node(text_elem, text_node)
+    append_child_node(root, text_elem)
+
+    root.yoga_node.calculate_layout(width=80)
+
+    result = renderer(root, is_screen_reader_enabled=True)
+
+    assert "Accessible text" in result["output"]
+    assert result["outputHeight"] >= 1
+
+
+def test_render_screen_reader_mode_empty():
+    """Test screen reader mode with empty content"""
+    root = create_node("ink-root")
+    root.yoga_node.calculate_layout(width=80)
+
+    result = renderer(root, is_screen_reader_enabled=True)
+
+    assert result["output"] == ""
+    assert result["outputHeight"] == 0
+
+
+def test_render_screen_reader_mode_with_static():
+    """Test screen reader mode with static node"""
+    root = create_node("ink-root")
+
+    # Main content
+    main_text = create_node("ink-text")
+    main_text_node = create_text_node("Main content")
+    append_child_node(main_text, main_text_node)
+    append_child_node(root, main_text)
+
+    # Static content
+    static_box = create_node("ink-box")
+    static_box.internal_static = True
+    static_text = create_node("ink-text")
+    static_text_node = create_text_node("Static content")
+    append_child_node(static_text, static_text_node)
+    append_child_node(static_box, static_text)
+    append_child_node(root, static_box)
+
+    root.static_node = static_box
+
+    root.yoga_node.calculate_layout(width=80)
+
+    result = renderer(root, is_screen_reader_enabled=True)
+
+    assert "Main content" in result["output"]
+    assert "Static content" in result["staticOutput"]
+
+
+def test_render_with_static_node():
+    """Test rendering with static node in normal mode"""
+    root = create_node("ink-root")
+
+    # Main content
+    main_text = create_node("ink-text")
+    main_text_node = create_text_node("Dynamic content")
+    append_child_node(main_text, main_text_node)
+    append_child_node(root, main_text)
+
+    # Static content
+    static_box = create_node("ink-box")
+    static_box.internal_static = True
+    static_text = create_node("ink-text")
+    static_text_node = create_text_node("Static content")
+    append_child_node(static_text, static_text_node)
+    append_child_node(static_box, static_text)
+    append_child_node(root, static_box)
+
+    root.static_node = static_box
+    root.is_static_dirty = True
+
+    root.yoga_node.calculate_layout(width=80)
+
+    result = renderer(root, is_screen_reader_enabled=False)
+
+    assert "Dynamic content" in result["output"]
+    # Static output should end with newline
+    assert result["staticOutput"].endswith("\n") or result["staticOutput"] == ""
+
+
+def test_render_static_node_without_yoga():
+    """Test that static node without yoga_node is skipped"""
+    root = create_node("ink-root")
+
+    # Main content
+    main_text = create_node("ink-text")
+    main_text_node = create_text_node("Main")
+    append_child_node(main_text, main_text_node)
+    append_child_node(root, main_text)
+
+    # Static content without yoga_node
+    static_box = create_node("ink-box")
+    static_box.internal_static = True
+    static_box.yoga_node = None  # No yoga node
+    root.static_node = static_box
+
+    root.yoga_node.calculate_layout(width=80)
+
+    result = renderer(root, is_screen_reader_enabled=False)
+
+    assert "Main" in result["output"]
+    assert result["staticOutput"] == ""
+
+
+def test_render_multiline_output():
+    """Test rendering multiline content"""
+    root = create_node("ink-root")
+
+    # Create multiple lines
+    box = create_node("ink-box")
+    box.style = {"flexDirection": "column"}
+
+    for i in range(3):
+        text_elem = create_node("ink-text")
+        text_node = create_text_node(f"Line {i}")
+        append_child_node(text_elem, text_node)
+        append_child_node(box, text_elem)
+
+    append_child_node(root, box)
+
+    root.yoga_node.calculate_layout(width=80)
+
+    result = renderer(root, is_screen_reader_enabled=False)
+
+    assert "Line 0" in result["output"]
+    assert "Line 1" in result["output"]
+    assert "Line 2" in result["output"]
+
+
+def test_render_with_styles():
+    """Test rendering content with styles"""
+    root = create_node("ink-root")
+    text_elem = create_node("ink-text")
+    text_elem.style = {"color": "red", "bold": True}
+    text_node = create_text_node("Styled text")
+
+    append_child_node(text_elem, text_node)
+    append_child_node(root, text_elem)
+
+    root.yoga_node.calculate_layout(width=80)
+
+    result = renderer(root, is_screen_reader_enabled=False)
+
+    # Output should contain the text
+    assert "Styled text" in result["output"]
+    # In screen reader mode, no styles
+    screen_result = renderer(root, is_screen_reader_enabled=True)
+    assert "Styled text" in screen_result["output"]

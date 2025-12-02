@@ -213,3 +213,225 @@ def test_apply_padding_multiline_with_both():
     assert result.startswith("\n")
     assert "  A" in result
     assert "  B" in result
+
+
+# === Tests for render_dom_node_to_output ===
+
+
+def test_render_dom_node_to_output_basic():
+    """Test render_dom_node_to_output with basic DOM structure"""
+    from inkpy.dom import append_child_node, create_node, create_text_node
+    from inkpy.renderer.output import Output
+    from inkpy.renderer.render_node import render_dom_node_to_output
+
+    root = create_node("ink-root")
+    text_elem = create_node("ink-text")
+    text_node = create_text_node("Hello DOM")
+
+    append_child_node(text_elem, text_node)
+    append_child_node(root, text_elem)
+
+    root.yoga_node.calculate_layout(width=80)
+
+    output = Output(width=80, height=24)
+    render_dom_node_to_output(root, output)
+
+    result = output.get()["output"]
+    assert "Hello DOM" in result
+
+
+def test_render_dom_node_skips_static():
+    """Test render_dom_node_to_output skips nodes with internal_static=True"""
+    from inkpy.dom import append_child_node, create_node, create_text_node
+    from inkpy.renderer.output import Output
+    from inkpy.renderer.render_node import render_dom_node_to_output
+
+    root = create_node("ink-root")
+    static_box = create_node("ink-box")
+    static_box.internal_static = True
+
+    text_elem = create_node("ink-text")
+    text_node = create_text_node("Static content")
+    append_child_node(text_elem, text_node)
+    append_child_node(static_box, text_elem)
+    append_child_node(root, static_box)
+
+    root.yoga_node.calculate_layout(width=80)
+
+    output = Output(width=80, height=24)
+    render_dom_node_to_output(root, output, skip_static=True)
+
+    result = output.get()["output"]
+    # Static content should be skipped
+    assert "Static content" not in result
+
+
+def test_render_dom_node_with_background():
+    """Test render_dom_node_to_output with background color"""
+    from inkpy.dom import create_node, set_style
+    from inkpy.layout.styles import apply_styles
+    from inkpy.renderer.output import Output
+    from inkpy.renderer.render_node import render_dom_node_to_output
+
+    root = create_node("ink-root")
+    set_style(root, {"backgroundColor": "red"})
+    apply_styles(root.yoga_node, {"width": 10, "height": 3})
+
+    root.yoga_node.calculate_layout(width=80)
+
+    output = Output(width=80, height=24)
+    render_dom_node_to_output(root, output)
+
+    result = output.get()["output"]
+    # Should contain ANSI color codes
+    assert "\x1b[" in result
+
+
+def test_render_dom_node_with_border():
+    """Test render_dom_node_to_output with border"""
+    from inkpy.dom import create_node, set_style
+    from inkpy.layout.styles import apply_styles
+    from inkpy.renderer.output import Output
+    from inkpy.renderer.render_node import render_dom_node_to_output
+
+    root = create_node("ink-root")
+    set_style(root, {"borderStyle": "single"})
+    apply_styles(root.yoga_node, {"width": 10, "height": 3})
+
+    root.yoga_node.calculate_layout(width=80)
+
+    output = Output(width=80, height=24)
+    render_dom_node_to_output(root, output)
+
+    result = output.get()["output"]
+    # Should contain border characters
+    assert "┌" in result or "│" in result
+
+
+def test_render_dom_node_with_transform():
+    """Test render_dom_node_to_output with internal_transform"""
+    from inkpy.dom import append_child_node, create_node, create_text_node
+    from inkpy.renderer.output import Output
+    from inkpy.renderer.render_node import render_dom_node_to_output
+
+    root = create_node("ink-root")
+    text_elem = create_node("ink-text")
+
+    # Add a transform that converts to uppercase
+    def uppercase_transform(text, index):
+        return text.upper()
+
+    text_elem.internal_transform = uppercase_transform
+    text_node = create_text_node("hello")
+    append_child_node(text_elem, text_node)
+    append_child_node(root, text_elem)
+
+    root.yoga_node.calculate_layout(width=80)
+
+    output = Output(width=80, height=24)
+    render_dom_node_to_output(root, output)
+
+    result = output.get()["output"]
+    assert "HELLO" in result
+
+
+def test_squash_dom_text_nodes():
+    """Test _squash_dom_text_nodes combines text from children"""
+    from inkpy.dom import append_child_node, create_node, create_text_node
+    from inkpy.renderer.render_node import _squash_dom_text_nodes
+
+    text_elem = create_node("ink-text")
+    text_node1 = create_text_node("Hello ")
+    text_node2 = create_text_node("World")
+
+    append_child_node(text_elem, text_node1)
+    append_child_node(text_elem, text_node2)
+
+    result = _squash_dom_text_nodes(text_elem)
+    assert result == "Hello World"
+
+
+def test_squash_dom_text_nodes_nested():
+    """Test _squash_dom_text_nodes handles nested text elements"""
+    from inkpy.dom import append_child_node, create_node, create_text_node
+    from inkpy.renderer.render_node import _squash_dom_text_nodes
+
+    text_elem = create_node("ink-text")
+    inner_text = create_node("ink-text")
+    text_node = create_text_node("Nested")
+
+    append_child_node(inner_text, text_node)
+    append_child_node(text_elem, inner_text)
+
+    result = _squash_dom_text_nodes(text_elem)
+    assert result == "Nested"
+
+
+def test_get_max_width():
+    """Test get_max_width returns width from yoga layout"""
+    from inkpy.layout.yoga_node import YogaNode
+    from inkpy.renderer.render_node import get_max_width
+
+    node = YogaNode()
+    node.set_style({"width": 50})
+    node.calculate_layout(width=80)
+
+    width = get_max_width(node)
+    assert width == 50
+
+
+def test_wrap_text_simple_wrap():
+    """Test wrap_text_simple with wrap mode"""
+    from inkpy.renderer.render_node import wrap_text_simple
+
+    text = "This is a very long line that should wrap"
+    result = wrap_text_simple(text, 20, "wrap")
+
+    # Should contain multiple lines
+    lines = result.split("\n")
+    assert len(lines) >= 2
+
+
+def test_wrap_text_simple_truncate_end():
+    """Test wrap_text_simple with truncate-end mode"""
+    from inkpy.renderer.render_node import wrap_text_simple
+
+    text = "This is too long"
+    result = wrap_text_simple(text, 10, "truncate-end")
+
+    # Should be truncated with ellipsis
+    assert len(result) <= 10
+    assert "…" in result
+
+
+def test_wrap_text_simple_truncate_middle():
+    """Test wrap_text_simple with truncate-middle mode"""
+    from inkpy.renderer.render_node import wrap_text_simple
+
+    text = "This is too long"
+    result = wrap_text_simple(text, 10, "truncate-middle")
+
+    # Should have ellipsis in middle
+    assert "…" in result
+
+
+def test_wrap_text_simple_truncate_start():
+    """Test wrap_text_simple with truncate-start mode"""
+    from inkpy.renderer.render_node import wrap_text_simple
+
+    text = "This is too long"
+    result = wrap_text_simple(text, 10, "truncate-start")
+
+    # Should have ellipsis at start
+    assert "…" in result
+
+
+def test_wrap_text_simple_fits():
+    """Test wrap_text_simple when text already fits"""
+    from inkpy.renderer.render_node import wrap_text_simple
+
+    text = "Short"
+    result = wrap_text_simple(text, 20, "truncate-end")
+
+    # Should return unchanged
+    assert result == "Short"
