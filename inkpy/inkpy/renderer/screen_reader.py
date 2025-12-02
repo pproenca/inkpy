@@ -28,9 +28,9 @@ def render_node_to_screen_reader_output(
     if skip_static and node.internal_static:
         return ''
     
-    # Skip nodes with display: none (check if yoga node exists and has been laid out)
-    # Note: We can't easily check display property in Poga, so we'll skip this check
-    # for now and rely on the layout system to handle visibility
+    # Skip nodes with display: none
+    if node.style.get('display') == 'none':
+        return ''
     
     output = ''
     

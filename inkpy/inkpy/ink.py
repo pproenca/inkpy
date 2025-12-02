@@ -5,8 +5,76 @@ import os
 import signal
 import time
 import asyncio
+import threading
 from typing import Optional, TextIO, Callable
 from inkpy.dom import create_node, DOMElement
+
+
+def throttle(
+    func: Callable,
+    wait_ms: int,
+    leading: bool = True,
+    trailing: bool = True
+) -> Callable:
+    """
+    Throttle function calls to at most once per wait_ms milliseconds.
+    
+    Equivalent to es-toolkit/compat throttle.
+    
+    Args:
+        func: Function to throttle
+        wait_ms: Minimum time between calls in milliseconds
+        leading: Call on leading edge (first call)
+        trailing: Call on trailing edge (after wait)
+    
+    Returns:
+        Throttled function
+    """
+    last_call_time = 0.0
+    pending_call = False
+    timer: Optional[threading.Timer] = None
+    lock = threading.Lock()
+    
+    def throttled(*args, **kwargs):
+        nonlocal last_call_time, pending_call, timer
+        
+        now = time.time() * 1000  # Convert to ms
+        
+        with lock:
+            time_since_last = now - last_call_time
+            
+            if time_since_last >= wait_ms:
+                # Enough time has passed - call immediately if leading
+                if leading:
+                    last_call_time = now
+                    func(*args, **kwargs)
+                else:
+                    pending_call = True
+            else:
+                # Within throttle window - schedule trailing call
+                pending_call = True
+            
+            # Schedule trailing call if not already scheduled
+            if trailing and pending_call and timer is None:
+                remaining = wait_ms - time_since_last
+                if remaining < 0:
+                    remaining = wait_ms
+                
+                def trailing_call():
+                    nonlocal pending_call, timer, last_call_time
+                    with lock:
+                        if pending_call:
+                            last_call_time = time.time() * 1000
+                            pending_call = False
+                            timer = None
+                    # Call outside lock to avoid deadlock
+                    func(*args, **kwargs)
+                
+                timer = threading.Timer(remaining / 1000, trailing_call)
+                timer.daemon = True
+                timer.start()
+    
+    return throttled
 from reactpy.core.layout import Layout
 from inkpy.backend.tui_backend import TUIBackend
 from inkpy.log_update import create_log_update, LogUpdate
@@ -91,7 +159,12 @@ class Ink:
         )
         self.throttled_log: LogUpdate = (
             self.log if self._unthrottled
-            else self.log  # TODO: Implement throttle wrapper
+            else throttle(
+                lambda content: self.log(content),
+                self._render_throttle_ms,
+                leading=True,
+                trailing=True
+            )
         )
         
         self.is_unmounted: bool = False

@@ -104,3 +104,33 @@ def test_screen_reader_output_adds_state_annotation():
     output = render_node_to_screen_reader_output(box)
     assert "(selected) button: Click me" in output or "button: (selected) Click me" in output
 
+
+def test_screen_reader_output_skips_display_none():
+    """Test that screen reader output skips nodes with display: none."""
+    from inkpy.dom import create_text_node, append_child_node
+    
+    root = create_node('ink-box')
+    root.style = {'flexDirection': 'column'}
+    
+    # Visible child
+    visible_box = create_node('ink-box')
+    visible_text = create_node('ink-text')
+    append_child_node(visible_text, create_text_node("Visible content"))
+    append_child_node(visible_box, visible_text)
+    append_child_node(root, visible_box)
+    
+    # Hidden child with display: none
+    hidden_box = create_node('ink-box')
+    hidden_box.style = {'display': 'none'}
+    hidden_text = create_node('ink-text')
+    append_child_node(hidden_text, create_text_node("Hidden content"))
+    append_child_node(hidden_box, hidden_text)
+    append_child_node(root, hidden_box)
+    
+    output = render_node_to_screen_reader_output(root)
+    
+    # Visible content should appear
+    assert "Visible content" in output
+    # Hidden content should NOT appear
+    assert "Hidden content" not in output
+

@@ -39,9 +39,9 @@ class TextNodeView(NodeView):
         
         width = 0
         for line in final_lines:
-            # TODO: Strip ANSI codes for real length
-            line_len = self._strip_ansi(line)
-            width = max(width, len(line_len))
+            # Strip ANSI codes for accurate character count
+            stripped = self._strip_ansi(line)
+            width = max(width, len(stripped))
             
         height = len(final_lines)
         

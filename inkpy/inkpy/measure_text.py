@@ -1,15 +1,22 @@
 """
 Text measurement module - measures text dimensions (width, height)
+Uses ANSI-aware width calculation for accurate terminal display.
 """
 from typing import Dict
-import re
+from inkpy.renderer.ansi_tokenize import string_width
 
 # Cache for text measurements
 _cache: Dict[str, Dict[str, int]] = {}
 
+
 def measure_text(text: str) -> Dict[str, int]:
     """
     Measure text dimensions (width and height).
+    
+    Uses ANSI-aware width calculation that handles:
+    - ANSI escape codes (ignored in width calculation)
+    - CJK characters (double-width)
+    - Emoji (variable width)
     
     Args:
         text: Text to measure
@@ -25,13 +32,12 @@ def measure_text(text: str) -> Dict[str, int]:
     if cached:
         return cached
     
-    # Calculate width (widest line)
+    # Calculate width (widest line) using ANSI-aware width
     lines = text.split('\n')
     width = 0
     for line in lines:
-        # Strip ANSI codes for accurate measurement
-        stripped = _strip_ansi(line)
-        width = max(width, len(stripped))
+        line_width = string_width(line)
+        width = max(width, line_width)
     
     # Height is number of lines
     height = len(lines)
@@ -40,9 +46,4 @@ def measure_text(text: str) -> Dict[str, int]:
     _cache[text] = dimensions
     
     return dimensions
-
-def _strip_ansi(text: str) -> str:
-    """Strip ANSI escape codes from text"""
-    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-    return ansi_escape.sub('', text)
 
