@@ -134,7 +134,17 @@ def App(
                 if is_raw_mode_supported() and hasattr(stdin, 'fileno'):
                     fd = stdin.fileno()
                     old_settings = termios.tcgetattr(fd)
-                    tty.setraw(fd)
+                    
+                    # Use cbreak mode instead of raw mode
+                    # Raw mode disables ALL terminal processing including output \n -> \r\n
+                    # Cbreak mode only disables input buffering/echo but keeps output processing
+                    new_settings = termios.tcgetattr(fd)
+                    # Disable canonical mode (line buffering) and echo
+                    new_settings[3] = new_settings[3] & ~termios.ICANON & ~termios.ECHO
+                    # Set minimum characters to read (1) and timeout (0)
+                    new_settings[6][termios.VMIN] = 1
+                    new_settings[6][termios.VTIME] = 0
+                    termios.tcsetattr(fd, termios.TCSANOW, new_settings)
                 
                 # Loop until event is set (stop signal)
                 while not loop_control['event'].is_set():
