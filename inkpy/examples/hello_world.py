@@ -15,4 +15,4 @@ def App():
 
 
 if __name__ == "__main__":
-    render(App())
+    render(App(), debug=True)
