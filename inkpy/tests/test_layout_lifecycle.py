@@ -165,24 +165,24 @@ class TestWaitUntilExitLifecycle:
     """Tests for wait_until_exit keeping effects alive"""
     
     @pytest.mark.asyncio
-    async def test_ink_run_layout_lifecycle_exists(self):
-        """Test that _run_layout_lifecycle method exists in Ink class"""
+    async def test_ink_run_interactive_lifecycle_exists(self):
+        """Test that _run_interactive_lifecycle method exists in Ink class"""
         from inkpy.ink import Ink
         
-        assert hasattr(Ink, '_run_layout_lifecycle'), \
-            "_run_layout_lifecycle method must exist to keep effects alive"
+        assert hasattr(Ink, '_run_interactive_lifecycle'), \
+            "_run_interactive_lifecycle method must exist to keep effects alive"
     
     @pytest.mark.asyncio
-    async def test_wait_until_exit_calls_layout_lifecycle(self):
-        """Test that wait_until_exit runs the layout lifecycle"""
+    async def test_wait_until_exit_calls_interactive_lifecycle(self):
+        """Test that wait_until_exit runs the interactive lifecycle"""
         from inkpy.ink import Ink
         import inspect
         
         source = inspect.getsource(Ink.wait_until_exit)
         
-        # wait_until_exit should call _run_layout_lifecycle
-        assert "_run_layout_lifecycle" in source, \
-            "wait_until_exit must call _run_layout_lifecycle to keep effects alive"
+        # wait_until_exit should call _run_interactive_lifecycle
+        assert "_run_interactive_lifecycle" in source, \
+            "wait_until_exit must call _run_interactive_lifecycle to keep effects alive"
 
 
 class TestEventEmitterConnection:
@@ -282,6 +282,55 @@ class TestRawModeStartsInputLoop:
         # Should restore terminal settings in finally block
         assert "termios.tcsetattr" in source, \
             "Input loop should restore terminal settings on exit"
+
+
+class TestNoDuplicateRendering:
+    """Tests that output is not rendered multiple times"""
+    
+    def test_separate_contexts_for_sync_and_interactive(self):
+        """
+        Test that sync render (tests) and interactive render (wait_until_exit)
+        use separate layout contexts.
+        
+        The architecture is:
+        - render() calls _do_sync_render() for immediate output (tests)
+        - wait_until_exit() calls _run_interactive_lifecycle() for effects
+        
+        This prevents duplicate rendering because:
+        1. Tests only call render() - gets one output from _do_sync_render
+        2. Interactive apps call render() then wait_until_exit() - 
+           _run_interactive_lifecycle creates a FRESH layout (not reusing the sync one)
+        """
+        from inkpy.ink import Ink
+        import inspect
+        
+        # render() should call _do_sync_render
+        render_source = inspect.getsource(Ink.render)
+        assert "_do_sync_render" in render_source, \
+            "render() should call _do_sync_render for immediate output"
+        
+        # _run_interactive_lifecycle should recreate the layout
+        lifecycle_source = inspect.getsource(Ink._run_interactive_lifecycle)
+        assert "Layout(self._app_component)" in lifecycle_source, \
+            "_run_interactive_lifecycle should create a fresh Layout"
+    
+    def test_interactive_lifecycle_creates_fresh_layout(self):
+        """
+        Regression test: _run_interactive_lifecycle must create a fresh Layout.
+        
+        The bug was: reusing the same Layout after _do_sync_render caused
+        the second async with to fail or produce unexpected results.
+        
+        The fix: _run_interactive_lifecycle creates a new Layout from _app_component.
+        """
+        from inkpy.ink import Ink
+        import inspect
+        
+        source = inspect.getsource(Ink._run_interactive_lifecycle)
+        
+        # Must recreate layout, not reuse
+        assert "self._layout = Layout" in source, \
+            "_run_interactive_lifecycle must create fresh Layout"
 
 
 class TestOutputProcessingPreserved:

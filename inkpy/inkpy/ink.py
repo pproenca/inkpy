@@ -100,6 +100,9 @@ class Ink:
         self._exit_promise: Optional[asyncio.Future] = None
         self._layout: Optional[Layout] = None
         self._backend = TUIBackend()
+        self._lifecycle_task: Optional[asyncio.Task] = None
+        self._render_event: Optional[asyncio.Event] = None
+        self._first_render_complete = asyncio.Event() if asyncio.get_event_loop else None
         
         # Signal exit handling
         self._unsubscribe_exit: Optional[Callable] = None
@@ -132,13 +135,19 @@ class Ink:
             )
     
     def render(self, node):
-        """Render a ReactPy component"""
+        """Render a ReactPy component.
+        
+        This sets up the component but does NOT enter the ReactPy layout context.
+        The layout context is entered in wait_until_exit() to keep effects alive.
+        
+        For immediate output (tests, non-interactive use), use render_sync().
+        """
         if self.is_unmounted:
             return
         
-        # Create layout for the component
+        # Create the App wrapper component
         from inkpy.components.app import App
-        app_component = App(
+        self._app_component = App(
             children=node,
             stdin=self.options['stdin'],
             stdout=self.options['stdout'],
@@ -149,38 +158,51 @@ class Ink:
             on_exit=self.unmount,
         )
         
-        self._layout = Layout(app_component)
+        # Create the Layout - but don't enter the context yet
+        self._layout = Layout(self._app_component)
         
-        # Do initial synchronous render
-        self._do_initial_render()
-        
-        # Trigger render to output
-        self.on_render()
+        # For synchronous use (tests), do a one-shot render
+        # This creates a temporary context just for the initial render
+        self._do_sync_render()
     
-    def _do_initial_render(self):
-        """Do initial synchronous render to populate DOM tree"""
+    def _do_sync_render(self):
+        """Do a synchronous one-shot render for immediate output.
+        
+        This is used for tests and non-interactive use cases.
+        For interactive apps, wait_until_exit() handles the full lifecycle.
+        """
         if self._layout is None:
             return
         
-        # Try to get existing event loop, or create a new one
         try:
             asyncio.get_running_loop()
-            # Event loop is running - use thread pool
+            # Event loop running - use thread pool
             import concurrent.futures
             with concurrent.futures.ThreadPoolExecutor() as pool:
-                future = pool.submit(self._run_sync_render)
+                future = pool.submit(self._sync_render_in_new_loop)
                 future.result(timeout=5.0)
         except RuntimeError:
-            # No running event loop - create one and run
-            asyncio.run(self._async_initial_render())
+            # No event loop - create one
+            asyncio.run(self._one_shot_render())
     
-    async def _async_initial_render(self):
-        """Async initial render to get VDOM and convert to DOM (one-shot, no effects)"""
+    def _sync_render_in_new_loop(self):
+        """Run one-shot render in a new event loop"""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(self._one_shot_render())
+        finally:
+            loop.close()
+    
+    async def _one_shot_render(self):
+        """One-shot render for immediate output (tests/non-interactive).
+        
+        NOTE: This creates a temporary layout context that immediately closes.
+        Effects will NOT persist. For effects, use wait_until_exit().
+        """
         if self._layout is None:
             return
         
-        # Do a one-shot render for initial output
-        # Effects will be handled in the full lifecycle
         async with self._layout:
             update = await self._layout.render()
             vdom = update.get('model') if isinstance(update, dict) else getattr(update, 'model', None)
@@ -188,25 +210,22 @@ class Ink:
             if vdom:
                 self._backend.vdom_to_dom(vdom, self.root_node)
                 self.calculate_layout()
+                self.on_render()
     
-    def _run_sync_render(self):
-        """Run async render in new event loop (for when main loop is running)"""
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            loop.run_until_complete(self._async_initial_render())
-        finally:
-            loop.close()
-    
-    async def _run_layout_lifecycle(self):
-        """Run the full layout lifecycle with effects"""
+    async def _run_interactive_lifecycle(self):
+        """Run the full interactive lifecycle with persistent effects.
+        
+        This is the ONLY place where we enter the layout context for interactive apps.
+        The context stays open until the app exits, keeping effects alive.
+        """
         if self._layout is None:
             return
         
-        # Enter layout context and keep it open for the app's lifetime
-        # This allows effects to run and persist
+        # Re-create layout for a fresh context (don't reuse the one from _do_sync_render)
+        self._layout = Layout(self._app_component)
+        
         async with self._layout:
-            # Initial render (if not already done)
+            # Initial render
             update = await self._layout.render()
             vdom = update.get('model') if isinstance(update, dict) else getattr(update, 'model', None)
             
@@ -215,13 +234,9 @@ class Ink:
                 self.calculate_layout()
                 self.on_render()
             
-            # Wait until app should exit, keeping layout context alive
-            # This allows effects to continue running
+            # Keep layout context alive for effects until app exits
             while not self.is_unmounted:
                 await asyncio.sleep(0.05)
-                
-                # Check if we need to re-render
-                # (ReactPy handles this internally via the layout)
     
     def calculate_layout(self):
         """Calculate Yoga layout for root node"""
@@ -425,16 +440,23 @@ class Ink:
                 self._exit_promise.set_result(None)
     
     async def wait_until_exit(self):
-        """Async wait for app exit - runs the full layout lifecycle with effects"""
+        """Wait for app exit while keeping the interactive lifecycle alive.
+        
+        This is the entry point for interactive apps. It:
+        1. Enters the ReactPy layout context (keeping effects alive)
+        2. Does the initial render
+        3. Waits until the app exits
+        
+        For non-interactive use (tests), just call render() without this.
+        """
         if self._exit_promise is None:
             self._exit_promise = asyncio.Future()
         
         if self.is_unmounted:
             return
         
-        # Run the layout lifecycle which keeps effects alive
-        # This replaces the initial render approach
-        await self._run_layout_lifecycle()
+        # Run the interactive lifecycle - this keeps effects alive
+        await self._run_interactive_lifecycle()
         
         # Return the exit promise result if set
         if self._exit_promise.done():
