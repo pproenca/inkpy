@@ -14,6 +14,7 @@ from .select_input import SelectInput
 from .spacer import Spacer
 from .spinner import Spinner
 from .static import Static
+from .table import Table
 from .text import Text
 from .text_input import TextInput
 from .transform import Transform
@@ -30,6 +31,7 @@ __all__ = [
     "Spacer",
     "Spinner",
     "Static",
+    "Table",
     "Text",
     "TextInput",
     "Transform",
