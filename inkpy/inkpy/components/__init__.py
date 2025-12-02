@@ -7,6 +7,7 @@ from .box import Box
 from .code_block import CodeBlock
 from .confirm_input import ConfirmInput
 from .error_overview import ErrorOverview
+from .link import Link
 from .multi_select import MultiSelect
 from .newline import Newline
 from .select_input import SelectInput
@@ -22,6 +23,7 @@ __all__ = [
     "CodeBlock",
     "ConfirmInput",
     "ErrorOverview",
+    "Link",
     "MultiSelect",
     "Newline",
     "SelectInput",
