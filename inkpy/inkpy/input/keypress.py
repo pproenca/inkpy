@@ -139,7 +139,8 @@ class Key:
     
     @property
     def return_(self) -> bool:
-        return self.name == 'return'
+        # Both 'return' (\r) and 'enter' (\n) should be True
+        return self.name in ('return', 'enter')
     
     @property
     def escape(self) -> bool:

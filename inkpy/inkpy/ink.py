@@ -462,9 +462,12 @@ class Ink:
         if self.is_unmounted:
             return
         
-        # Stop custom reconciler input thread if running
+        # Stop custom reconciler input thread and run effect cleanups
         if self._using_custom_reconciler:
             app_hooks._stop_input_thread()
+            # Run all effect cleanups
+            if self._reconciler:
+                self._reconciler.run_cleanup()
         
         self.calculate_layout()
         self.on_render()

@@ -49,6 +49,12 @@ class MemoHook(Hook):
 
 
 @dataclass
+class RefHook(Hook):
+    """Ref hook storage - mutable container that persists across renders"""
+    current: Any
+
+
+@dataclass
 class Context(Generic[T]):
     """Context object for sharing values down the tree"""
     default_value: T
@@ -276,6 +282,38 @@ def use_callback(callback: Callable, deps: Optional[List[Any]] = None) -> Callab
         Memoized callback
     """
     return use_memo(lambda: callback, deps)
+
+
+def use_ref(initial_value: T = None) -> RefHook:
+    """
+    Returns a mutable ref object whose .current property persists across renders.
+
+    Unlike state, mutating .current does not trigger a re-render.
+
+    Args:
+        initial_value: Initial value for ref.current
+
+    Returns:
+        RefHook object with .current property
+
+    Example:
+        @component
+        def App():
+            handler_ref = use_ref(None)
+            handler_ref.current = lambda: print("latest handler")
+            return Text("Hello")
+    """
+    fiber = _get_current_fiber()
+    hook_index = fiber.hook_index
+
+    if hook_index < len(fiber.hooks):
+        hook = fiber.hooks[hook_index]
+    else:
+        hook = RefHook(current=initial_value)
+        fiber.hooks.append(hook)
+
+    fiber.hook_index += 1
+    return hook
 
 
 def _deps_changed(old_deps: List[Any], new_deps: List[Any]) -> bool:

@@ -362,8 +362,24 @@ class Reconciler:
                 # Check if it's an effect hook with a callback
                 if hasattr(hook, 'callback') and callable(hook.callback):
                     # Check if this effect needs to run
-                    # (for now, run all effects on first render)
-                    if not hasattr(hook, '_has_run'):
+                    # Effect runs if:
+                    # 1. Never run before (_last_deps is None)
+                    # 2. Dependencies changed
+                    should_run = False
+                    if not hasattr(hook, '_last_deps'):
+                        # First run
+                        should_run = True
+                    elif hook.deps is None:
+                        # No deps = run every render
+                        should_run = True
+                    elif hook._last_deps is None:
+                        # Had no deps before, now has deps
+                        should_run = True
+                    elif self._deps_changed(hook._last_deps, hook.deps):
+                        # Deps changed
+                        should_run = True
+                    
+                    if should_run:
                         # Run cleanup from previous render if exists
                         if hasattr(hook, 'cleanup') and callable(hook.cleanup):
                             try:
@@ -375,13 +391,45 @@ class Reconciler:
                         try:
                             cleanup = hook.callback()
                             hook.cleanup = cleanup if callable(cleanup) else None
-                            hook._has_run = True
+                            hook._last_deps = hook.deps.copy() if hook.deps else None
                         except Exception:
                             pass
         
         # Recurse to children and siblings
         self._run_fiber_effects(fiber.child)
         self._run_fiber_effects(fiber.sibling)
+    
+    def _deps_changed(self, old_deps: list, new_deps: list) -> bool:
+        """Check if effect dependencies have changed."""
+        if old_deps is None or new_deps is None:
+            return True
+        if len(old_deps) != len(new_deps):
+            return True
+        for old, new in zip(old_deps, new_deps):
+            if old is not new and old != new:
+                return True
+        return False
+    
+    def run_cleanup(self) -> None:
+        """Run all effect cleanups (called on unmount)."""
+        if self.current_root and self.current_root.child:
+            self._run_cleanup_recursive(self.current_root.child)
+    
+    def _run_cleanup_recursive(self, fiber: FiberNode) -> None:
+        """Recursively run cleanup for all effect hooks."""
+        if not fiber:
+            return
+        
+        if fiber.tag == FiberTag.FUNCTION_COMPONENT:
+            for hook in fiber.hooks:
+                if hasattr(hook, 'cleanup') and callable(hook.cleanup):
+                    try:
+                        hook.cleanup()
+                    except Exception:
+                        pass
+        
+        self._run_cleanup_recursive(fiber.child)
+        self._run_cleanup_recursive(fiber.sibling)
 
     def _commit_work(self, fiber: FiberNode) -> None:
         """Commit a fiber's changes to DOM"""

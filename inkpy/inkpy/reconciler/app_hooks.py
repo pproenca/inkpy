@@ -12,7 +12,7 @@ import tty
 import termios
 import select
 import threading
-from inkpy.reconciler.hooks import use_effect, use_context, create_context, Context
+from inkpy.reconciler.hooks import use_effect, use_context, create_context, Context, use_ref
 from inkpy.input.keypress import Key, parse_keypress, NON_ALPHANUMERIC_KEYS
 
 # App context for exit functionality
@@ -233,20 +233,32 @@ def use_input(
             use_input(handle_input)
             return Text(f"Selected: {selected}")
     """
+    # Use a ref to always call the latest handler
+    # This avoids stale closure issues where old handler is called
+    # even after component re-renders with new state
+    handler_ref = use_ref(handler)
+    
+    # Update the ref to latest handler on every render
+    handler_ref.current = handler
+    
     def setup_input():
         if not is_active:
             return None
         
-        # Register handler
-        _app_state['input_handlers'].append(handler)
+        # Create a stable wrapper that always calls the latest handler
+        def stable_wrapper(input_str, key):
+            handler_ref.current(input_str, key)
+        
+        # Register the stable wrapper (not the handler itself)
+        _app_state['input_handlers'].append(stable_wrapper)
         
         # Start input thread if not running
         _start_input_thread()
         
         # Cleanup function
         def cleanup():
-            if handler in _app_state['input_handlers']:
-                _app_state['input_handlers'].remove(handler)
+            if stable_wrapper in _app_state['input_handlers']:
+                _app_state['input_handlers'].remove(stable_wrapper)
         
         return cleanup
     
