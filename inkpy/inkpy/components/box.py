@@ -8,63 +8,7 @@ from reactpy import component, html
 from reactpy.core.hooks import use_context
 from inkpy.components.accessibility_context import accessibility_context
 from inkpy.components.background_context import background_context
-
-
-# Style prop name mapping (snake_case -> camelCase)
-STYLE_PROP_MAP = {
-    'flex_direction': 'flexDirection',
-    'align_items': 'alignItems',
-    'align_content': 'alignContent',
-    'align_self': 'alignSelf',
-    'justify_content': 'justifyContent',
-    'flex_wrap': 'flexWrap',
-    'flex_grow': 'flexGrow',
-    'flex_shrink': 'flexShrink',
-    'flex_basis': 'flexBasis',
-    'padding_top': 'paddingTop',
-    'padding_bottom': 'paddingBottom',
-    'padding_left': 'paddingLeft',
-    'padding_right': 'paddingRight',
-    'margin_top': 'marginTop',
-    'margin_bottom': 'marginBottom',
-    'margin_left': 'marginLeft',
-    'margin_right': 'marginRight',
-    'border_style': 'borderStyle',
-    'border_color': 'borderColor',
-    'background_color': 'backgroundColor',
-    'min_width': 'minWidth',
-    'min_height': 'minHeight',
-    'max_width': 'maxWidth',
-    'max_height': 'maxHeight',
-    'overflow_x': 'overflowX',
-    'overflow_y': 'overflowY',
-    'text_wrap': 'textWrap',
-}
-
-
-def _normalize_style_props(kwargs: Dict[str, Any]) -> tuple[Dict[str, Any], Dict[str, Any]]:
-    """
-    Separate and normalize style props from other kwargs.
-    
-    Returns:
-        Tuple of (style_props, other_kwargs)
-    """
-    style_props = {}
-    other_kwargs = {}
-    
-    for key, value in kwargs.items():
-        if key in STYLE_PROP_MAP:
-            # Convert snake_case to camelCase
-            camel_key = STYLE_PROP_MAP[key]
-            style_props[camel_key] = value
-        elif key in STYLE_PROP_MAP.values():
-            # Already camelCase, pass through
-            style_props[key] = value
-        else:
-            # Not a style prop
-            other_kwargs[key] = value
-    
-    return style_props, other_kwargs
+from inkpy.components.style_props import normalize_style_props
 
 
 @component
@@ -120,7 +64,7 @@ def Box(
         effective_children = children
     
     # Extract style props from kwargs (handles snake_case -> camelCase conversion)
-    extra_style_props, other_kwargs = _normalize_style_props(kwargs)
+    extra_style_props, other_kwargs = normalize_style_props(kwargs)
     
     if style is None:
         style = {}

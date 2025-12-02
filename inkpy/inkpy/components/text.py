@@ -9,6 +9,7 @@ from reactpy.core.hooks import use_context
 from ..renderer.colorize import colorize
 from .background_context import background_context
 from .accessibility_context import accessibility_context
+from .style_props import normalize_style_props
 
 
 def _apply_text_styles(
@@ -87,6 +88,9 @@ def Text(
     style: Optional[dict] = None,
     aria_label: Optional[str] = None,
     aria_hidden: bool = False,
+    # Snake_case aliases
+    background_color: Optional[Union[str, int]] = None,
+    dim_color: Optional[bool] = None,
     **kwargs
 ):
     """
@@ -106,7 +110,9 @@ def Text(
         style: Additional style dictionary
         aria_label: Label for screen readers
         aria_hidden: Hide element from screen readers
-        **kwargs: Additional props
+        background_color: Snake_case alias for backgroundColor
+        dim_color: Snake_case alias for dimColor
+        **kwargs: Additional style props (snake_case or camelCase) and other attributes
     """
     # Get accessibility context
     try:
@@ -123,8 +129,15 @@ def Text(
         # Context not available (e.g., in tests without Layout)
         inherited_background = None
     
+    # Handle snake_case aliases
+    effective_bg_color = backgroundColor if backgroundColor is not None else background_color
+    effective_dim_color = dimColor if dim_color is None else dim_color
+    
     # Use explicit backgroundColor if provided, otherwise use inherited
-    effective_background = backgroundColor if backgroundColor is not None else inherited_background
+    effective_background = effective_bg_color if effective_bg_color is not None else inherited_background
+    
+    # Extract style props from kwargs (handles snake_case -> camelCase conversion)
+    extra_style_props, other_kwargs = normalize_style_props(kwargs)
     
     # Handle screen reader mode
     # If screen reader enabled and aria-hidden, return None
@@ -149,7 +162,7 @@ def Text(
             text,
             color=color,
             backgroundColor=effective_background,
-            dimColor=dimColor,
+            dimColor=effective_dim_color,
             bold=bold,
             italic=italic,
             underline=underline,
@@ -157,13 +170,14 @@ def Text(
             inverse=inverse,
         )
     
-    # Merge style with defaults
+    # Merge style with defaults, then with extra style props from kwargs
     final_style = {
         'flexGrow': 0,
         'flexShrink': 1,
         'flexDirection': 'row',
         'textWrap': wrap,
-        **style
+        **style,
+        **extra_style_props,  # Extra style props override style dict
     }
     
     # Store transform in internal_transform (will be used by renderer)
@@ -172,5 +186,5 @@ def Text(
         "style": final_style,
         "children": children_or_aria_label,
         "internal_transform": transform,
-        **kwargs
+        **other_kwargs  # Non-style kwargs
     })
