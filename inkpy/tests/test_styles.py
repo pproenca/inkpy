@@ -154,3 +154,132 @@ def test_align_self_auto():
     layout = node.view.poga_layout()
     assert layout is not None
 
+
+# --- Task 3: flexBasis auto verification tests ---
+
+def test_flex_basis_auto_layout_behavior():
+    """Test that flexBasis: 'auto' uses content size as basis.
+    
+    This is the key G3 verification: flexBasis auto should allow
+    flex items to size based on their content.
+    """
+    from inkpy.layout.text_node import TextNode
+    
+    # Create container with row direction
+    container = YogaNode()
+    apply_styles(container, {
+        'flexDirection': 'row',
+        'width': 100,
+    })
+    
+    # Create child with flexBasis: 'auto'
+    child = YogaNode()
+    apply_styles(child, {'flexBasis': 'auto', 'flexGrow': 0, 'flexShrink': 0})
+    
+    # Add text content to give it intrinsic size
+    text = TextNode("Hello")  # ~5 chars
+    child.add_child(text)
+    container.add_child(child)
+    
+    # Calculate layout
+    container.calculate_layout(width=100)
+    
+    # With flexBasis: auto, the child should take its content size
+    child_layout = child.get_layout()
+    # Width should be approximately text width (not 0, not 100)
+    assert child_layout.get('width', 0) > 0
+    assert child_layout.get('width', 0) < 100
+
+
+def test_flex_basis_fixed_vs_auto():
+    """Compare flexBasis: fixed value vs flexBasis: 'auto'.
+    
+    A fixed value should override content size.
+    """
+    from inkpy.layout.text_node import TextNode
+    
+    # Child with fixed flexBasis
+    container1 = YogaNode()
+    apply_styles(container1, {'flexDirection': 'row', 'width': 100})
+    
+    fixed_child = YogaNode()
+    apply_styles(fixed_child, {'flexBasis': 50})
+    text1 = TextNode("Hello")
+    fixed_child.add_child(text1)
+    container1.add_child(fixed_child)
+    container1.calculate_layout(width=100)
+    
+    fixed_layout = fixed_child.get_layout()
+    
+    # Child with auto flexBasis  
+    container2 = YogaNode()
+    apply_styles(container2, {'flexDirection': 'row', 'width': 100})
+    
+    auto_child = YogaNode()
+    apply_styles(auto_child, {'flexBasis': 'auto'})
+    text2 = TextNode("Hello")
+    auto_child.add_child(text2)
+    container2.add_child(auto_child)
+    container2.calculate_layout(width=100)
+    
+    auto_layout = auto_child.get_layout()
+    
+    # Fixed should be 50, auto should be content-based (different)
+    assert fixed_layout.get('width', 0) == 50
+    # Auto width depends on content - should be around text width
+    assert auto_layout.get('width', 0) != 50
+
+
+def test_flex_basis_percentage():
+    """Test that flexBasis percentage works correctly."""
+    container = YogaNode()
+    apply_styles(container, {
+        'flexDirection': 'row',
+        'width': 100,
+    })
+    
+    child = YogaNode()
+    apply_styles(child, {'flexBasis': '50%'})
+    container.add_child(child)
+    
+    container.calculate_layout(width=100)
+    
+    child_layout = child.get_layout()
+    # 50% of 100 = 50
+    assert child_layout.get('width', 0) == 50
+
+
+def test_flex_basis_with_grow():
+    """Test flexBasis: 'auto' combined with flexGrow."""
+    from inkpy.layout.text_node import TextNode
+    
+    container = YogaNode()
+    apply_styles(container, {
+        'flexDirection': 'row',
+        'width': 100,
+    })
+    
+    # Two children, both with flexGrow: 1
+    child1 = YogaNode()
+    apply_styles(child1, {'flexBasis': 'auto', 'flexGrow': 1})
+    text1 = TextNode("Hi")
+    child1.add_child(text1)
+    container.add_child(child1)
+    
+    child2 = YogaNode()
+    apply_styles(child2, {'flexBasis': 'auto', 'flexGrow': 1})
+    text2 = TextNode("Hi")
+    child2.add_child(text2)
+    container.add_child(child2)
+    
+    container.calculate_layout(width=100)
+    
+    # Both should share remaining space equally
+    layout1 = child1.get_layout()
+    layout2 = child2.get_layout()
+    
+    # They should be approximately equal (both growing to fill space)
+    width1 = layout1.get('width', 0)
+    width2 = layout2.get('width', 0)
+    assert abs(width1 - width2) < 2  # Allow small rounding differences
+
