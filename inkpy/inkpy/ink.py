@@ -175,17 +175,17 @@ class Ink:
             asyncio.run(self._async_initial_render())
     
     async def _async_initial_render(self):
-        """Async initial render to get VDOM and convert to DOM"""
+        """Async initial render to get VDOM and convert to DOM (one-shot, no effects)"""
         if self._layout is None:
             return
         
+        # Do a one-shot render for initial output
+        # Effects will be handled in the full lifecycle
         async with self._layout:
-            # Get initial render
             update = await self._layout.render()
             vdom = update.get('model') if isinstance(update, dict) else getattr(update, 'model', None)
             
             if vdom:
-                # Convert VDOM to DOM
                 self._backend.vdom_to_dom(vdom, self.root_node)
                 self.calculate_layout()
     
@@ -197,6 +197,31 @@ class Ink:
             loop.run_until_complete(self._async_initial_render())
         finally:
             loop.close()
+    
+    async def _run_layout_lifecycle(self):
+        """Run the full layout lifecycle with effects"""
+        if self._layout is None:
+            return
+        
+        # Enter layout context and keep it open for the app's lifetime
+        # This allows effects to run and persist
+        async with self._layout:
+            # Initial render (if not already done)
+            update = await self._layout.render()
+            vdom = update.get('model') if isinstance(update, dict) else getattr(update, 'model', None)
+            
+            if vdom:
+                self._backend.vdom_to_dom(vdom, self.root_node)
+                self.calculate_layout()
+                self.on_render()
+            
+            # Wait until app should exit, keeping layout context alive
+            # This allows effects to continue running
+            while not self.is_unmounted:
+                await asyncio.sleep(0.05)
+                
+                # Check if we need to re-render
+                # (ReactPy handles this internally via the layout)
     
     def calculate_layout(self):
         """Calculate Yoga layout for root node"""
@@ -400,14 +425,21 @@ class Ink:
                 self._exit_promise.set_result(None)
     
     async def wait_until_exit(self):
-        """Async wait for app exit"""
+        """Async wait for app exit - runs the full layout lifecycle with effects"""
         if self._exit_promise is None:
             self._exit_promise = asyncio.Future()
         
         if self.is_unmounted:
             return
         
-        return await self._exit_promise
+        # Run the layout lifecycle which keeps effects alive
+        # This replaces the initial render approach
+        await self._run_layout_lifecycle()
+        
+        # Return the exit promise result if set
+        if self._exit_promise.done():
+            return self._exit_promise.result()
+        return None
     
     def clear(self):
         """Clear output"""
