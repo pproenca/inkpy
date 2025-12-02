@@ -110,6 +110,7 @@ class Ink:
         # Custom reconciler support
         self._reconciler: Optional[Reconciler] = None
         self._using_custom_reconciler: bool = False
+        self._event_loop: Optional[asyncio.AbstractEventLoop] = None  # For thread-safe exit
         
         # Signal exit handling
         self._unsubscribe_exit: Optional[Callable] = None
@@ -490,14 +491,14 @@ class Ink:
         
         # Resolve exit promise (thread-safe for when called from input thread)
         if self._exit_promise and not self._exit_promise.done():
-            try:
-                loop = asyncio.get_running_loop()
+            if self._event_loop is not None:
+                # Use stored loop for thread-safe resolution from input thread
                 if error:
-                    loop.call_soon_threadsafe(self._exit_promise.set_exception, error)
+                    self._event_loop.call_soon_threadsafe(self._exit_promise.set_exception, error)
                 else:
-                    loop.call_soon_threadsafe(self._exit_promise.set_result, None)
-            except RuntimeError:
-                # No running loop, set directly
+                    self._event_loop.call_soon_threadsafe(self._exit_promise.set_result, None)
+            else:
+                # No event loop stored, set directly (may not wake up properly)
                 if error:
                     self._exit_promise.set_exception(error)
                 else:
@@ -513,6 +514,9 @@ class Ink:
         
         For non-interactive use (tests), just call render() without this.
         """
+        # Store event loop for thread-safe unmount from input thread
+        self._event_loop = asyncio.get_running_loop()
+        
         if self._exit_promise is None:
             self._exit_promise = asyncio.Future()
         
