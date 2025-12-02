@@ -160,11 +160,14 @@ def use_state(initial_value: T) -> tuple[T, Callable[[T], None]]:
             hook.state = update
     hook.queue.clear()
 
+    # Capture the callback at definition time, not at call time
+    captured_callback = _state_change_callback
+
     # Create setter that schedules update
     def set_state(new_value):
         hook.queue.append(new_value)
-        if _state_change_callback:
-            _state_change_callback()
+        if captured_callback:
+            captured_callback()
 
     return hook.state, set_state
 

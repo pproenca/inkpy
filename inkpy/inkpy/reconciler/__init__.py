@@ -12,6 +12,7 @@ from .hooks import (
     Context,
     ContextProvider,
 )
+from .reconciler import Reconciler
 
 __all__ = [
     "FiberNode",
@@ -31,5 +32,6 @@ __all__ = [
     "create_context",
     "Context",
     "ContextProvider",
+    "Reconciler",
 ]
 
