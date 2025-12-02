@@ -136,10 +136,28 @@ class Reconciler:
 
     def _update_function_component(self, fiber: FiberNode) -> None:
         """Update a function component fiber"""
+        import inspect
+        
         # Set up hooks context
         with HooksContext(fiber, on_state_change=self.schedule_update):
             # Call the component function
-            children = fiber.element_type(fiber.props)
+            # Check if function accepts arguments to support both React-style (props dict)
+            # and Python-style (keyword arguments or no arguments) components
+            func = fiber.element_type
+            sig = inspect.signature(func)
+            params = sig.parameters
+            
+            if not params:
+                # No parameters - call with no arguments
+                children = func()
+            elif len(params) == 1 and list(params.keys())[0] == 'props':
+                # Single 'props' parameter - pass as dict
+                children = func(fiber.props)
+            else:
+                # Multiple parameters or named parameters - pass as kwargs
+                # Filter out 'children' which is handled separately by the reconciler
+                kwargs = {k: v for k, v in fiber.props.items() if k != 'children'}
+                children = func(**kwargs)
 
         # Normalize children
         if not isinstance(children, list):

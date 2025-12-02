@@ -12,6 +12,8 @@ from inkpy.backend.tui_backend import TUIBackend
 from inkpy.log_update import create_log_update, LogUpdate
 from inkpy.is_in_ci import is_in_ci
 from inkpy.wrap_text import wrap_text
+from inkpy.reconciler.element import Element
+from inkpy.reconciler.reconciler import Reconciler
 
 
 def erase_lines(count: int) -> str:
@@ -104,6 +106,10 @@ class Ink:
         self._render_event: Optional[asyncio.Event] = None
         self._first_render_complete = asyncio.Event() if asyncio.get_event_loop else None
         
+        # Custom reconciler support
+        self._reconciler: Optional[Reconciler] = None
+        self._using_custom_reconciler: bool = False
+        
         # Signal exit handling
         self._unsubscribe_exit: Optional[Callable] = None
         self._setup_exit_handler()
@@ -135,7 +141,7 @@ class Ink:
             )
     
     def render(self, node):
-        """Render a ReactPy component.
+        """Render a ReactPy component or custom reconciler Element.
         
         This sets up the component but does NOT enter the ReactPy layout context.
         The layout context is entered in wait_until_exit() to keep effects alive.
@@ -144,6 +150,15 @@ class Ink:
         """
         if self.is_unmounted:
             return
+        
+        # Detect if this is a custom reconciler Element
+        if isinstance(node, Element):
+            self._using_custom_reconciler = True
+            self._render_with_custom_reconciler(node)
+            return
+        
+        # Fall back to ReactPy rendering
+        self._using_custom_reconciler = False
         
         # Create the App wrapper component
         from inkpy.components.app import App
@@ -164,6 +179,34 @@ class Ink:
         # For synchronous use (tests), do a one-shot render
         # This creates a temporary context just for the initial render
         self._do_sync_render()
+    
+    def _render_with_custom_reconciler(self, element: Element):
+        """Render using the custom reconciler instead of ReactPy.
+        
+        The custom reconciler provides synchronous state updates,
+        which is essential for interactive applications.
+        """
+        if self._reconciler is None:
+            self._reconciler = Reconciler(
+                on_commit=self._on_reconciler_commit,
+                on_compute_layout=self.calculate_layout,
+            )
+        
+        # Render the element tree
+        self._reconciler.render(element)
+    
+    def _on_reconciler_commit(self, root_dom: DOMElement):
+        """Called after the custom reconciler commits changes to DOM."""
+        # Update our root node to point to the reconciler's DOM
+        self.root_node = root_dom
+        self.root_node.on_compute_layout = self.calculate_layout
+        self.root_node.on_render = (
+            self.on_render if self._unthrottled else self._throttled_on_render
+        )
+        self.root_node.on_immediate_render = self.on_render
+        
+        # Render to terminal
+        self.on_render()
     
     def _do_sync_render(self):
         """Do a synchronous one-shot render for immediate output.
@@ -454,6 +497,11 @@ class Ink:
         
         if self.is_unmounted:
             return
+        
+        # For custom reconciler, just wait for exit (no async lifecycle needed)
+        if self._using_custom_reconciler:
+            await self._exit_promise
+            return self._exit_promise.result() if self._exit_promise.done() else None
         
         # Run the interactive lifecycle - this keeps effects alive
         await self._run_interactive_lifecycle()
