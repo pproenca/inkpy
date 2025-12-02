@@ -1,7 +1,9 @@
-node_modules
-/build
+# Node.js (ink/)
+node_modules/
+/build/
+dist/
 
-# Python
+# Python (inkpy/)
 __pycache__/
 *.py[cod]
 *$py.class
@@ -9,3 +11,24 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+*.egg-info/
+.eggs/
+.ruff_cache/
+
+# IDE
+.idea/
+*.swp
+*.swo
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.coverage
+htmlcov/
+
+# Build artifacts
+*.log

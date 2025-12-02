@@ -1,12 +1,14 @@
 README.md
 pyproject.toml
 inkpy/__init__.py
+inkpy/console_patch.py
 inkpy/dom.py
 inkpy/get_max_width.py
 inkpy/ink.py
 inkpy/instances.py
 inkpy/is_in_ci.py
 inkpy/log_update.py
+inkpy/measure_element.py
 inkpy/measure_text.py
 inkpy/py.typed
 inkpy/render.py
@@ -59,6 +61,8 @@ inkpy/renderer/output.py
 inkpy/renderer/render_node.py
 inkpy/renderer/renderer.py
 inkpy/renderer/screen_reader.py
+tests/test_ansi_escapes.py
+tests/test_ansi_sequences.py
 tests/test_ansi_tokenize.py
 tests/test_app_error_boundary.py
 tests/test_app_input.py
@@ -67,6 +71,7 @@ tests/test_borders.py
 tests/test_box_aria.py
 tests/test_colorize.py
 tests/test_components.py
+tests/test_console_patch.py
 tests/test_contexts.py
 tests/test_dom.py
 tests/test_error_overview.py
@@ -80,6 +85,7 @@ tests/test_integration.py
 tests/test_keypress.py
 tests/test_log_update.py
 tests/test_measure_element.py
+tests/test_measure_function.py
 tests/test_output.py
 tests/test_render.py
 tests/test_render_integration.py
@@ -91,7 +97,9 @@ tests/test_styles.py
 tests/test_text_background.py
 tests/test_text_measurement.py
 tests/test_text_screen_reader.py
+tests/test_transform.py
 tests/test_tui_backend.py
+tests/test_tui_backend_hide.py
 tests/test_tui_backend_reconciler.py
 tests/test_use_app.py
 tests/test_use_input.py

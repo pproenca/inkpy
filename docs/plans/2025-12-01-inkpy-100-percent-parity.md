@@ -4,9 +4,9 @@
 >
 > **Tech Stack:** Python 3.9+, ReactPy, Poga (Yoga layout), pytest
 >
-> **Source Reference:** `/Users/pedroproenca/Documents/Projects/inkpy/src/`
+> **Source Reference:** `ink/src/`
 >
-> **Target:** `/Users/pedroproenca/Documents/Projects/inkpy/python_port/inkpy/`
+> **Target:** `inkpy/inkpy/`
 >
 > **Skills Reference:** See `@.cursor/skills/test-driven-development.md` for TDD protocol
 >
@@ -37,7 +37,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ### 1. Core System Files
 
-#### `src/ink.tsx` (441 lines) → `inkpy/ink.py` ✅ 90%
+#### `ink/src/ink.tsx` (441 lines) → `inkpy/ink.py` ✅ 90%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -63,7 +63,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/reconciler.ts` (340 lines) → `inkpy/backend/tui_backend.py` ✅ 85%
+#### `ink/src/reconciler.ts` (340 lines) → `inkpy/backend/tui_backend.py` ✅ 85%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -84,7 +84,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/render.ts` (168 lines) → `inkpy/render.py` ✅ 100%
+#### `ink/src/render.ts` (168 lines) → `inkpy/render.py` ✅ 100%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -96,7 +96,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/dom.ts` (265 lines) → `inkpy/dom.py` ✅ 95%
+#### `ink/src/dom.ts` (265 lines) → `inkpy/dom.py` ✅ 95%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -123,7 +123,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ### 2. Rendering Pipeline Files
 
-#### `src/renderer.ts` (78 lines) → `inkpy/renderer/renderer.py` ✅ 95%
+#### `ink/src/renderer.ts` (78 lines) → `inkpy/renderer/renderer.py` ✅ 95%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -134,7 +134,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/render-node-to-output.ts` (215 lines) → `inkpy/renderer/render_node.py` ✅ 85%
+#### `ink/src/render-node-to-output.ts` (215 lines) → `inkpy/renderer/render_node.py` ✅ 85%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -151,7 +151,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/output.ts` (245 lines) → `inkpy/renderer/output.py` ✅ 90%
+#### `ink/src/output.ts` (245 lines) → `inkpy/renderer/output.py` ✅ 90%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -167,7 +167,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/render-border.ts` (126 lines) → `inkpy/renderer/borders.py` ✅ 100%
+#### `ink/src/render-border.ts` (126 lines) → `inkpy/renderer/borders.py` ✅ 100%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -179,7 +179,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/render-background.ts` (53 lines) → `inkpy/renderer/background.py` ✅ 100%
+#### `ink/src/render-background.ts` (53 lines) → `inkpy/renderer/background.py` ✅ 100%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -188,7 +188,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/colorize.ts` (73 lines) → `inkpy/renderer/colorize.py` ✅ 100%
+#### `ink/src/colorize.ts` (73 lines) → `inkpy/renderer/colorize.py` ✅ 100%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -200,7 +200,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/squash-text-nodes.ts` (48 lines) → inline in `inkpy/dom.py` ✅ 100%
+#### `ink/src/squash-text-nodes.ts` (48 lines) → inline in `inkpy/dom.py` ✅ 100%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -211,7 +211,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ### 3. Layout/Styles Files
 
-#### `src/styles.ts` (586 lines) → `inkpy/layout/styles.py` ✅ 95%
+#### `ink/src/styles.ts` (586 lines) → `inkpy/layout/styles.py` ✅ 95%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -228,7 +228,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/wrap-text.ts` (48 lines) → `inkpy/wrap_text.py` ✅ 95%
+#### `ink/src/wrap-text.ts` (48 lines) → `inkpy/wrap_text.py` ✅ 95%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -240,7 +240,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/measure-text.ts` (33 lines) → `inkpy/measure_text.py` ✅ 100%
+#### `ink/src/measure-text.ts` (33 lines) → `inkpy/measure_text.py` ✅ 100%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -250,7 +250,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/get-max-width.ts` (14 lines) → `inkpy/get_max_width.py` ✅ 100%
+#### `ink/src/get-max-width.ts` (14 lines) → `inkpy/get_max_width.py` ✅ 100%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -260,7 +260,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ### 4. Components Files
 
-#### `src/components/App.tsx` (379 lines) → `inkpy/components/app.py` ✅ 95%
+#### `ink/src/components/App.tsx` (379 lines) → `inkpy/components/app.py` ✅ 95%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -279,7 +279,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/components/Box.tsx` (118 lines) → `inkpy/components/box.py` ✅ 95%
+#### `ink/src/components/Box.tsx` (118 lines) → `inkpy/components/box.py` ✅ 95%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -291,7 +291,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/components/Text.tsx` (146 lines) → `inkpy/components/text.py` ✅ 90%
+#### `ink/src/components/Text.tsx` (146 lines) → `inkpy/components/text.py` ✅ 90%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -307,7 +307,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/components/Static.tsx` (59 lines) → `inkpy/components/static.py` ✅ 95%
+#### `ink/src/components/Static.tsx` (59 lines) → `inkpy/components/static.py` ✅ 95%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -319,7 +319,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/components/Transform.tsx` (43 lines) → `inkpy/components/transform.py` ✅ 90%
+#### `ink/src/components/Transform.tsx` (43 lines) → `inkpy/components/transform.py` ✅ 90%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -332,7 +332,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/components/Newline.tsx` (18 lines) → `inkpy/components/newline.py` ✅ 100%
+#### `ink/src/components/Newline.tsx` (18 lines) → `inkpy/components/newline.py` ✅ 100%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -341,7 +341,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/components/Spacer.tsx` (12 lines) → `inkpy/components/spacer.py` ✅ 100%
+#### `ink/src/components/Spacer.tsx` (12 lines) → `inkpy/components/spacer.py` ✅ 100%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -349,7 +349,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/components/ErrorOverview.tsx` (138 lines) → `inkpy/components/error_overview.py` ⚠️ 70%
+#### `ink/src/components/ErrorOverview.tsx` (138 lines) → `inkpy/components/error_overview.py` ⚠️ 70%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -381,7 +381,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ### 6. Hook Files
 
-#### `src/hooks/use-input.ts` (196 lines) → `inkpy/hooks/use_input.py` ✅ 90%
+#### `ink/src/hooks/use-input.ts` (196 lines) → `inkpy/hooks/use_input.py` ✅ 90%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -400,7 +400,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/hooks/use-focus.ts` (84 lines) → `inkpy/hooks/use_focus.py` ✅ 95%
+#### `ink/src/hooks/use-focus.ts` (84 lines) → `inkpy/hooks/use_focus.py` ✅ 95%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -428,7 +428,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ### 7. Input System
 
-#### `src/parse-keypress.ts` (243 lines) → `inkpy/input/keypress.py` ✅ 100%
+#### `ink/src/parse-keypress.ts` (243 lines) → `inkpy/input/keypress.py` ✅ 100%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -445,7 +445,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ### 8. Terminal Management Files
 
-#### `src/log-update.ts` (161 lines) → `inkpy/log_update.py` ✅ 95%
+#### `ink/src/log-update.ts` (161 lines) → `inkpy/log_update.py` ✅ 95%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -463,7 +463,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/instances.ts` (11 lines) → `inkpy/instances.py` ✅ 100%
+#### `ink/src/instances.ts` (11 lines) → `inkpy/instances.py` ✅ 100%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -471,7 +471,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ---
 
-#### `src/measure-element.ts` (24 lines) → `inkpy/measure_element.py` ✅ 100%
+#### `ink/src/measure-element.ts` (24 lines) → `inkpy/measure_element.py` ✅ 100%
 
 | Feature | TS Line | InkPy | Status |
 |---------|---------|-------|--------|
@@ -482,7 +482,7 @@ This deep analysis covers **every file** in the Ink TypeScript source (42 files,
 
 ### 9. Public API Exports
 
-#### `src/index.ts` (29 lines) → `inkpy/__init__.py` ✅ 100%
+#### `ink/src/index.ts` (29 lines) → `inkpy/__init__.py` ✅ 100%
 
 | Export | InkPy | Status |
 |--------|-------|--------|

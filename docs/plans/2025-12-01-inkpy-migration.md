@@ -4,7 +4,7 @@
 
 > **Tech Stack:** Python 3.9+, ReactPy (component framework), Poga (Yoga layout bindings), pytest (testing)
 
-> **Reference:** Original Ink source at `/Users/pedroproenca/Documents/Projects/ink/src/`
+> **Reference:** Original Ink source at `ink/src/`
 
 ---
 
@@ -75,7 +75,7 @@
 ## Phase 3: Complete Renderer (Priority: HIGH)
 
 ### Task 3.1: Output Buffer Class ⬜
-**Files:** `python_port/inkpy/renderer/output.py`, `python_port/tests/test_output.py`
+**Files:** `inkpy/inkpy/renderer/output.py`, `inkpy/tests/test_output.py`
 
 **Step 1:** Write failing tests for Output buffer
 ```python
@@ -97,7 +97,7 @@ def test_output_clip():
     # "Hello World" starts at 0, clip at 2-8, so we should see "llo Wor"
 ```
 
-**Step 2:** Implement Output class (port from `src/output.ts`)
+**Step 2:** Implement Output class (port from `ink/src/output.ts`)
 - Initialize 2D buffer with spaces
 - `write(x, y, text, transformers)` - position text with optional transforms
 - `clip(x1, x2, y1, y2)` - enable clipping region
@@ -106,12 +106,12 @@ def test_output_clip():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_output.py -v`
+**Verification:** `cd inkpy && pytest tests/test_output.py -v`
 
 ---
 
 ### Task 3.2: Enhanced Styles Mapping ⬜
-**Files:** `python_port/inkpy/layout/styles.py`, `python_port/tests/test_styles.py`
+**Files:** `inkpy/inkpy/layout/styles.py`, `inkpy/tests/test_styles.py`
 
 **Step 1:** Write failing tests for style properties
 ```python
@@ -133,7 +133,7 @@ def test_percentage_dimensions():
     apply_styles(node, {'width': '50%', 'height': '100%'})
 ```
 
-**Step 2:** Implement comprehensive style mapping (port from `src/styles.ts`)
+**Step 2:** Implement comprehensive style mapping (port from `ink/src/styles.ts`)
 - Position styles (absolute/relative)
 - Margin shortcuts (margin, marginX, marginY, marginTop, etc.)
 - Padding shortcuts
@@ -145,12 +145,12 @@ def test_percentage_dimensions():
 
 **Step 3:** Verify all tests pass
 
-**Verification:** `cd python_port && pytest tests/test_styles.py -v`
+**Verification:** `cd inkpy && pytest tests/test_styles.py -v`
 
 ---
 
 ### Task 3.3: Text Coloring and Styling ⬜
-**Files:** `python_port/inkpy/renderer/colorize.py`, `python_port/tests/test_colorize.py`
+**Files:** `inkpy/inkpy/renderer/colorize.py`, `inkpy/tests/test_colorize.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -175,12 +175,12 @@ def test_hex_color():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_colorize.py -v`
+**Verification:** `cd inkpy && pytest tests/test_colorize.py -v`
 
 ---
 
 ### Task 3.4: Border Rendering ⬜
-**Files:** `python_port/inkpy/renderer/borders.py`, `python_port/tests/test_borders.py`
+**Files:** `inkpy/inkpy/renderer/borders.py`, `inkpy/tests/test_borders.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -205,12 +205,12 @@ def test_render_box_with_border():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_borders.py -v`
+**Verification:** `cd inkpy && pytest tests/test_borders.py -v`
 
 ---
 
 ### Task 3.5: Background Rendering ⬜
-**Files:** `python_port/inkpy/renderer/background.py`, `python_port/tests/test_background.py`
+**Files:** `inkpy/inkpy/renderer/background.py`, `inkpy/tests/test_background.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -221,18 +221,18 @@ def test_render_background():
     # Check that background color is applied to all cells
 ```
 
-**Step 2:** Implement background rendering (port from `src/render-background.ts`)
+**Step 2:** Implement background rendering (port from `ink/src/render-background.ts`)
 - Fill rectangular region with background color
 - Integrate with Output buffer
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_background.py -v`
+**Verification:** `cd inkpy && pytest tests/test_background.py -v`
 
 ---
 
 ### Task 3.6: Render Node to Output ⬜
-**Files:** `python_port/inkpy/renderer/render_node.py`, `python_port/tests/test_render_node.py`
+**Files:** `inkpy/inkpy/renderer/render_node.py`, `inkpy/tests/test_render_node.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -261,14 +261,14 @@ def test_render_box_with_padding():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_render_node.py -v`
+**Verification:** `cd inkpy && pytest tests/test_render_node.py -v`
 
 ---
 
 ## Phase 4: Input Handling (Priority: HIGH)
 
 ### Task 4.1: Keypress Parser ⬜
-**Files:** `python_port/inkpy/input/keypress.py`, `python_port/tests/test_keypress.py`
+**Files:** `inkpy/inkpy/input/keypress.py`, `inkpy/tests/test_keypress.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -287,7 +287,7 @@ def test_parse_enter():
     assert key.name == 'return'
 ```
 
-**Step 2:** Implement parse_keypress (port from `src/parse-keypress.ts`)
+**Step 2:** Implement parse_keypress (port from `ink/src/parse-keypress.ts`)
 - Parse ANSI escape sequences
 - Detect modifier keys (ctrl, shift, meta)
 - Map key codes to named keys
@@ -295,12 +295,12 @@ def test_parse_enter():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_keypress.py -v`
+**Verification:** `cd inkpy && pytest tests/test_keypress.py -v`
 
 ---
 
 ### Task 4.2: useInput Hook ⬜
-**Files:** `python_port/inkpy/hooks/use_input.py`, `python_port/tests/test_use_input.py`
+**Files:** `inkpy/inkpy/hooks/use_input.py`, `inkpy/tests/test_use_input.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -328,12 +328,12 @@ def test_use_input_arrow_keys():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_use_input.py -v`
+**Verification:** `cd inkpy && pytest tests/test_use_input.py -v`
 
 ---
 
 ### Task 4.3: Stdin Context and Hook ⬜
-**Files:** `python_port/inkpy/hooks/use_stdin.py`, `python_port/inkpy/components/stdin_context.py`
+**Files:** `inkpy/inkpy/hooks/use_stdin.py`, `inkpy/inkpy/components/stdin_context.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -354,14 +354,14 @@ def test_stdin_context():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_use_stdin.py -v`
+**Verification:** `cd inkpy && pytest tests/test_use_stdin.py -v`
 
 ---
 
 ## Phase 5: Core Components (Priority: HIGH)
 
 ### Task 5.1: Enhanced Text Component ⬜
-**Files:** `python_port/inkpy/components/text.py`, `python_port/tests/test_text_component.py`
+**Files:** `inkpy/inkpy/components/text.py`, `inkpy/tests/test_text_component.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -378,7 +378,7 @@ def test_text_wrap():
     # Verify truncation behavior
 ```
 
-**Step 2:** Enhance Text component (port from `src/components/Text.tsx`)
+**Step 2:** Enhance Text component (port from `ink/src/components/Text.tsx`)
 - Color support (foreground)
 - Background color
 - Bold, italic, underline, strikethrough, inverse
@@ -388,12 +388,12 @@ def test_text_wrap():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_text_component.py -v`
+**Verification:** `cd inkpy && pytest tests/test_text_component.py -v`
 
 ---
 
 ### Task 5.2: Enhanced Box Component ⬜
-**Files:** `python_port/inkpy/components/box.py`, `python_port/tests/test_box_component.py`
+**Files:** `inkpy/inkpy/components/box.py`, `inkpy/tests/test_box_component.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -409,7 +409,7 @@ def test_box_flex_props():
     b = Box(Text("Content"), flexDirection="row", justifyContent="center")
 ```
 
-**Step 2:** Enhance Box component (port from `src/components/Box.tsx`)
+**Step 2:** Enhance Box component (port from `ink/src/components/Box.tsx`)
 - All Styles props (flexDirection, padding, margin, etc.)
 - Border styles and colors
 - Background color
@@ -419,12 +419,12 @@ def test_box_flex_props():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_box_component.py -v`
+**Verification:** `cd inkpy && pytest tests/test_box_component.py -v`
 
 ---
 
 ### Task 5.3: Static Component ⬜
-**Files:** `python_port/inkpy/components/static.py`, `python_port/tests/test_static.py`
+**Files:** `inkpy/inkpy/components/static.py`, `inkpy/tests/test_static.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -436,19 +436,19 @@ def test_static_items():
     s = Static(items=items, children=lambda item: Text(item))
 ```
 
-**Step 2:** Implement Static component (port from `src/components/Static.tsx`)
+**Step 2:** Implement Static component (port from `ink/src/components/Static.tsx`)
 - Render children only once (persist above dynamic output)
 - Support `items` prop for dynamic static content
 - Mark static node in DOM tree
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_static.py -v`
+**Verification:** `cd inkpy && pytest tests/test_static.py -v`
 
 ---
 
 ### Task 5.4: Newline and Spacer Components ⬜
-**Files:** `python_port/inkpy/components/newline.py`, `python_port/inkpy/components/spacer.py`
+**Files:** `inkpy/inkpy/components/newline.py`, `inkpy/inkpy/components/spacer.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -467,12 +467,12 @@ def test_spacer():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_newline_spacer.py -v`
+**Verification:** `cd inkpy && pytest tests/test_newline_spacer.py -v`
 
 ---
 
 ### Task 5.5: Transform Component ⬜
-**Files:** `python_port/inkpy/components/transform.py`, `python_port/tests/test_transform.py`
+**Files:** `inkpy/inkpy/components/transform.py`, `inkpy/tests/test_transform.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -481,20 +481,20 @@ def test_transform_uppercase():
     # Should output "HELLO"
 ```
 
-**Step 2:** Implement Transform component (port from `src/components/Transform.tsx`)
+**Step 2:** Implement Transform component (port from `ink/src/components/Transform.tsx`)
 - Accept transform function `(line: str, index: int) -> str`
 - Apply transformation to each line of output
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_transform.py -v`
+**Verification:** `cd inkpy && pytest tests/test_transform.py -v`
 
 ---
 
 ## Phase 6: App Infrastructure (Priority: MEDIUM)
 
 ### Task 6.1: App Context and useApp Hook ⬜
-**Files:** `python_port/inkpy/components/app_context.py`, `python_port/inkpy/hooks/use_app.py`
+**Files:** `inkpy/inkpy/components/app_context.py`, `inkpy/inkpy/hooks/use_app.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -512,12 +512,12 @@ def test_use_app_exit():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_use_app.py -v`
+**Verification:** `cd inkpy && pytest tests/test_use_app.py -v`
 
 ---
 
 ### Task 6.2: Stdout/Stderr Hooks ⬜
-**Files:** `python_port/inkpy/hooks/use_stdout.py`, `python_port/inkpy/hooks/use_stderr.py`
+**Files:** `inkpy/inkpy/hooks/use_stdout.py`, `inkpy/inkpy/hooks/use_stderr.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -535,12 +535,12 @@ def test_use_stdout():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_std_hooks.py -v`
+**Verification:** `cd inkpy && pytest tests/test_std_hooks.py -v`
 
 ---
 
 ### Task 6.3: Focus Management ⬜
-**Files:** `python_port/inkpy/components/focus_context.py`, `python_port/inkpy/hooks/use_focus.py`, `python_port/inkpy/hooks/use_focus_manager.py`
+**Files:** `inkpy/inkpy/components/focus_context.py`, `inkpy/inkpy/hooks/use_focus.py`, `inkpy/inkpy/hooks/use_focus_manager.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -568,12 +568,12 @@ def test_focus_manager():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_focus.py -v`
+**Verification:** `cd inkpy && pytest tests/test_focus.py -v`
 
 ---
 
 ### Task 6.4: Main Ink Class ⬜
-**Files:** `python_port/inkpy/ink.py`, `python_port/tests/test_ink.py`
+**Files:** `inkpy/inkpy/ink.py`, `inkpy/tests/test_ink.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -593,7 +593,7 @@ def test_ink_unmount():
     # Verify cleanup
 ```
 
-**Step 2:** Implement Ink class (port from `src/ink.tsx`)
+**Step 2:** Implement Ink class (port from `ink/src/ink.tsx`)
 - Constructor with options (stdout, stdin, stderr, debug, exitOnCtrlC, maxFps)
 - render() method
 - unmount() method
@@ -603,12 +603,12 @@ def test_ink_unmount():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_ink.py -v`
+**Verification:** `cd inkpy && pytest tests/test_ink.py -v`
 
 ---
 
 ### Task 6.5: Render Function ⬜
-**Files:** `python_port/inkpy/render.py`, `python_port/tests/test_render.py`
+**Files:** `inkpy/inkpy/render.py`, `inkpy/tests/test_render.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -624,20 +624,20 @@ def test_render():
     instance.unmount()
 ```
 
-**Step 2:** Implement render function (port from `src/render.ts`)
+**Step 2:** Implement render function (port from `ink/src/render.ts`)
 - Create Ink instance
 - Return Instance object with rerender, unmount, waitUntilExit, clear
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_render.py -v`
+**Verification:** `cd inkpy && pytest tests/test_render.py -v`
 
 ---
 
 ## Phase 7: Integration & End-to-End (Priority: MEDIUM)
 
 ### Task 7.1: DOM Node System ⬜
-**Files:** `python_port/inkpy/dom.py`, `python_port/tests/test_dom.py`
+**Files:** `inkpy/inkpy/dom.py`, `inkpy/tests/test_dom.py`
 
 **Step 1:** Write failing tests
 ```python
@@ -653,7 +653,7 @@ def test_append_child():
     assert child in parent.child_nodes
 ```
 
-**Step 2:** Implement DOM module (port from `src/dom.ts`)
+**Step 2:** Implement DOM module (port from `ink/src/dom.ts`)
 - DOMElement and TextNode classes
 - createNode, createTextNode
 - appendChildNode, removeChildNode, insertBeforeNode
@@ -662,12 +662,12 @@ def test_append_child():
 
 **Step 3:** Verify tests pass
 
-**Verification:** `cd python_port && pytest tests/test_dom.py -v`
+**Verification:** `cd inkpy && pytest tests/test_dom.py -v`
 
 ---
 
 ### Task 7.2: Counter Example (E2E Test) ⬜
-**Files:** `python_port/examples/counter.py`, `python_port/tests/test_counter_e2e.py`
+**Files:** `inkpy/examples/counter.py`, `inkpy/tests/test_counter_e2e.py`
 
 **Step 1:** Write failing test
 ```python
@@ -704,12 +704,12 @@ if __name__ == "__main__":
 
 **Step 3:** Verify E2E test passes
 
-**Verification:** `cd python_port && python examples/counter.py` (manual verification)
+**Verification:** `cd inkpy && python examples/counter.py` (manual verification)
 
 ---
 
 ### Task 7.3: Interactive Example (E2E Test) ⬜
-**Files:** `python_port/examples/interactive.py`
+**Files:** `inkpy/examples/interactive.py`
 
 **Step 1:** Write failing test for input handling
 
@@ -744,7 +744,7 @@ def SelectList():
 ## Phase 8: Documentation & Polish (Priority: LOW)
 
 ### Task 8.1: API Documentation ⬜
-**Files:** `python_port/docs/api.md`
+**Files:** `inkpy/docs/api.md`
 
 - Document all exported components
 - Document all hooks
@@ -754,7 +754,7 @@ def SelectList():
 ---
 
 ### Task 8.2: README ⬜
-**Files:** `python_port/README.md`
+**Files:** `inkpy/README.md`
 
 - Quick start guide
 - Installation instructions
@@ -764,7 +764,7 @@ def SelectList():
 ---
 
 ### Task 8.3: Type Hints ⬜
-**Files:** All `python_port/inkpy/**/*.py`
+**Files:** All `inkpy/inkpy/**/*.py`
 
 - Add comprehensive type hints
 - Create typed interfaces for Props
@@ -816,7 +816,7 @@ def SelectList():
 ## File Structure (Target)
 
 ```
-python_port/
+inkpy/
 ├── inkpy/
 │   ├── __init__.py           # Public API exports
 │   ├── ink.py                # Main Ink class
