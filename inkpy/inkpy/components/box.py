@@ -10,12 +10,72 @@ from inkpy.components.accessibility_context import accessibility_context
 from inkpy.components.background_context import background_context
 
 
+# Style prop name mapping (snake_case -> camelCase)
+STYLE_PROP_MAP = {
+    'flex_direction': 'flexDirection',
+    'align_items': 'alignItems',
+    'align_content': 'alignContent',
+    'align_self': 'alignSelf',
+    'justify_content': 'justifyContent',
+    'flex_wrap': 'flexWrap',
+    'flex_grow': 'flexGrow',
+    'flex_shrink': 'flexShrink',
+    'flex_basis': 'flexBasis',
+    'padding_top': 'paddingTop',
+    'padding_bottom': 'paddingBottom',
+    'padding_left': 'paddingLeft',
+    'padding_right': 'paddingRight',
+    'margin_top': 'marginTop',
+    'margin_bottom': 'marginBottom',
+    'margin_left': 'marginLeft',
+    'margin_right': 'marginRight',
+    'border_style': 'borderStyle',
+    'border_color': 'borderColor',
+    'background_color': 'backgroundColor',
+    'min_width': 'minWidth',
+    'min_height': 'minHeight',
+    'max_width': 'maxWidth',
+    'max_height': 'maxHeight',
+    'overflow_x': 'overflowX',
+    'overflow_y': 'overflowY',
+    'text_wrap': 'textWrap',
+}
+
+
+def _normalize_style_props(kwargs: Dict[str, Any]) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Separate and normalize style props from other kwargs.
+    
+    Returns:
+        Tuple of (style_props, other_kwargs)
+    """
+    style_props = {}
+    other_kwargs = {}
+    
+    for key, value in kwargs.items():
+        if key in STYLE_PROP_MAP:
+            # Convert snake_case to camelCase
+            camel_key = STYLE_PROP_MAP[key]
+            style_props[camel_key] = value
+        elif key in STYLE_PROP_MAP.values():
+            # Already camelCase, pass through
+            style_props[key] = value
+        else:
+            # Not a style prop
+            other_kwargs[key] = value
+    
+    return style_props, other_kwargs
+
+
 @component
 def Box(
     children=None,
     style: Optional[Dict[str, Any]] = None,
     backgroundColor: Optional[Union[str, int]] = None,
     borderStyle: Optional[str] = None,
+    # Snake_case aliases for common props
+    background_color: Optional[Union[str, int]] = None,
+    border_style: Optional[str] = None,
     aria_label: Optional[str] = None,
     aria_hidden: bool = False,
     aria_role: Optional[str] = None,
@@ -30,11 +90,13 @@ def Box(
         style: Style dictionary (supports all flexbox properties)
         backgroundColor: Background color (will provide via BackgroundContext)
         borderStyle: Border style ('single', 'double', 'round', 'bold', etc.)
+        background_color: Snake_case alias for backgroundColor
+        border_style: Snake_case alias for borderStyle
         aria_label: Label for screen readers
         aria_hidden: Hide element from screen readers
         aria_role: ARIA role (button, checkbox, list, etc.)
         aria_state: ARIA state dictionary (checked, disabled, etc.)
-        **kwargs: Additional props
+        **kwargs: Additional style props (snake_case or camelCase) and other attributes
     """
     # Get accessibility context (with default if not available)
     try:
@@ -57,6 +119,9 @@ def Box(
     else:
         effective_children = children
     
+    # Extract style props from kwargs (handles snake_case -> camelCase conversion)
+    extra_style_props, other_kwargs = _normalize_style_props(kwargs)
+    
     if style is None:
         style = {}
     
@@ -66,15 +131,20 @@ def Box(
         'flexDirection': 'row',
         'flexGrow': 0,
         'flexShrink': 1,
-        **style
+        **style,
+        **extra_style_props,  # Extra style props override style dict
     }
     
-    # Add backgroundColor and borderStyle to style
-    if backgroundColor:
-        final_style['backgroundColor'] = backgroundColor
+    # Handle snake_case aliases for explicit props
+    effective_bg = backgroundColor or background_color
+    effective_border = borderStyle or border_style
     
-    if borderStyle:
-        final_style['borderStyle'] = borderStyle
+    # Add backgroundColor and borderStyle to style
+    if effective_bg:
+        final_style['backgroundColor'] = effective_bg
+    
+    if effective_border:
+        final_style['borderStyle'] = effective_border
     
     # Handle overflow defaults
     if 'overflowX' not in final_style:
@@ -104,8 +174,8 @@ def Box(
             'state': aria_state or {}
         }
     
-    # Add other kwargs
-    attributes.update(kwargs)
+    # Add other kwargs (non-style props)
+    attributes.update(other_kwargs)
     
     # Create box element
     # Children must be passed as positional args, not in attributes dict
@@ -118,10 +188,10 @@ def Box(
         box_element = html.div(attributes, effective_children)
     
     # If backgroundColor is set, wrap with BackgroundContext Provider
-    if backgroundColor:
+    if effective_bg:
         return background_context(
             box_element,
-            value=backgroundColor
+            value=effective_bg
         )
     
     return box_element
