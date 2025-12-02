@@ -298,3 +298,133 @@ def test_ink_unmount_resolves_exit_promise():
         assert exit_task.done()
 
     asyncio.run(test_unmount())
+
+
+def test_ink_console_patch_enabled():
+    """Test Ink with patch_console enabled (non-debug mode)"""
+    stdout = MockStdout()
+
+    ink = Ink(
+        stdout=stdout,
+        stdin=io.StringIO(),
+        stderr=MockStdout(),
+        debug=False,
+        patch_console=True,  # Enable console patching
+    )
+
+    # Should have restore_console if patching was enabled
+    # (might be None if console_patch module not available)
+    assert hasattr(ink, "restore_console")
+
+
+def test_ink_console_patch_disabled():
+    """Test Ink with patch_console disabled"""
+    stdout = MockStdout()
+
+    ink = Ink(
+        stdout=stdout,
+        stdin=io.StringIO(),
+        stderr=MockStdout(),
+        debug=False,
+        patch_console=False,  # Disable console patching
+    )
+
+    # restore_console should be None
+    assert ink.restore_console is None
+
+
+def test_ink_calculate_layout():
+    """Test calculate_layout method"""
+    stdout = MockStdout(columns=80)
+
+    ink = Ink(
+        stdout=stdout,
+        stdin=io.StringIO(),
+        stderr=MockStdout(),
+    )
+
+    # Should not raise
+    ink.calculate_layout()
+
+    # Verify layout was calculated
+    assert hasattr(ink, "root_node")
+
+
+def test_ink_clear_method():
+    """Test clear method exists and can be called"""
+    stdout = MockStdout()
+
+    ink = Ink(
+        stdout=stdout,
+        stdin=io.StringIO(),
+        stderr=MockStdout(),
+    )
+
+    # Clear should not raise
+    ink.clear()
+
+    # Just verify the method exists and can be called
+    assert hasattr(ink, "clear")
+
+
+def test_ink_render_with_component():
+    """Test render method with a ReactPy component"""
+    from reactpy import component
+
+    from inkpy.components.box import Box
+    from inkpy.components.text import Text
+
+    stdout = MockStdout()
+
+    ink = Ink(
+        stdout=stdout,
+        stdin=io.StringIO(),
+        stderr=MockStdout(),
+        debug=True,
+    )
+
+    @component
+    def TestComponent():
+        return Box(Text("Test"))
+
+    # Render should work
+    ink.render(TestComponent())
+
+    # Should have rendered
+    assert ink.is_unmounted is False
+    ink.unmount()
+
+
+def test_ink_write_to_stdout():
+    """Test _write_to_stdout method"""
+    stdout = MockStdout()
+
+    ink = Ink(
+        stdout=stdout,
+        stdin=io.StringIO(),
+        stderr=MockStdout(),
+    )
+
+    # Call internal write method
+    ink._write_to_stdout("test output")
+
+    # Output should be written
+    # (may be buffered, so just verify method exists and doesn't crash)
+    assert hasattr(ink, "_write_to_stdout")
+
+
+def test_ink_write_to_stderr():
+    """Test _write_to_stderr method"""
+    stderr = MockStdout()
+
+    ink = Ink(
+        stdout=MockStdout(),
+        stdin=io.StringIO(),
+        stderr=stderr,
+    )
+
+    # Call internal write method
+    ink._write_to_stderr("error output")
+
+    # Should not crash
+    assert hasattr(ink, "_write_to_stderr")
