@@ -285,17 +285,24 @@ class TUIBackend:
         # This will be implemented when integrating with renderer module
         return ""
 
-    def vdom_to_dom(self, vdom: Any, parent: Optional[DOMElement] = None) -> Optional[DOMElement]:
+    def vdom_to_dom(
+        self, vdom: Any, parent: Optional[DOMElement] = None, root: Optional[DOMElement] = None
+    ) -> Optional[DOMElement]:
         """
         Convert ReactPy VDOM to DOM nodes.
 
         Args:
             vdom: ReactPy VDOM (dict with tagName/attributes/children, or string)
             parent: Parent DOM element to append to
+            root: Root DOM element (for tracking static nodes)
 
         Returns:
             Created DOM element (or None for text nodes)
         """
+        # Track root node - first parent is the root
+        if root is None:
+            root = parent
+
         # Handle text nodes
         if isinstance(vdom, str):
             text_node = create_text_node(vdom)
@@ -332,8 +339,11 @@ class TUIBackend:
                 # Store transform function for text rendering
                 node.internal_transform = value
             elif key == "internal_static":
-                # Mark node as static
+                # Mark node as static and set on root for renderer
                 node.internal_static = value
+                if value and root:
+                    root.static_node = node
+                    root.is_static_dirty = True
             elif key == "internal_accessibility":
                 # Set accessibility attributes
                 set_attribute(node, key, value)
@@ -355,7 +365,7 @@ class TUIBackend:
 
         for child in children:
             if child is not None:
-                self.vdom_to_dom(child, node)
+                self.vdom_to_dom(child, node, root)
 
         # Append to parent if provided
         if parent:

@@ -8,7 +8,7 @@ from typing import Any
 
 from ..dom import DOMElement
 from .output import Output
-from .render_node import render_dom_node_to_output, render_node_to_output
+from .render_node import render_dom_node_to_output
 from .screen_reader import render_node_to_screen_reader_output
 
 
@@ -73,11 +73,11 @@ def renderer(node: DOMElement, is_screen_reader_enabled: bool) -> dict[str, Any]
             height=int(static_layout.get("height", 24)),
         )
 
-        render_node_to_output(
-            node.static_node.yoga_node,
+        # Use DOM-based rendering for static content (same as main content)
+        render_dom_node_to_output(
+            node.static_node,
             static_output_buffer,
             skip_static=False,
-            style=node.static_node.style if node.static_node else {},
         )
 
     # Get generated output
