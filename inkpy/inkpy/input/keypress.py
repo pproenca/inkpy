@@ -156,6 +156,43 @@ class Key:
     @property
     def delete(self) -> bool:
         return self.name == 'delete'
+    
+    # === Snake_case aliases (Pythonic API) ===
+    
+    @property
+    def up_arrow(self) -> bool:
+        """Snake_case alias for upArrow"""
+        return self.upArrow
+    
+    @property
+    def down_arrow(self) -> bool:
+        """Snake_case alias for downArrow"""
+        return self.downArrow
+    
+    @property
+    def left_arrow(self) -> bool:
+        """Snake_case alias for leftArrow"""
+        return self.leftArrow
+    
+    @property
+    def right_arrow(self) -> bool:
+        """Snake_case alias for rightArrow"""
+        return self.rightArrow
+    
+    @property
+    def page_up(self) -> bool:
+        """Snake_case alias for pageUp"""
+        return self.pageUp
+    
+    @property
+    def page_down(self) -> bool:
+        """Snake_case alias for pageDown"""
+        return self.pageDown
+    
+    @property
+    def return_key(self) -> bool:
+        """Alias for return_ (more readable)"""
+        return self.return_
 
 
 def parse_keypress(s: Union[bytes, str] = '') -> Key:

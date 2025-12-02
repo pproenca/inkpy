@@ -103,3 +103,70 @@ def test_parse_ctrl_combinations():
     assert key.name == 'a'
     assert key.ctrl is True
 
+
+# === Snake_case alias tests ===
+
+def test_key_snake_case_arrow_properties():
+    """Test Key class has both camelCase and snake_case properties for arrows"""
+    key = parse_keypress('\x1b[A')  # Up arrow
+    
+    # CamelCase (existing)
+    assert key.upArrow is True
+    
+    # Snake_case (NEW)
+    assert key.up_arrow is True
+    assert key.down_arrow is False
+
+
+def test_key_snake_case_all_arrows():
+    """Test all arrow snake_case aliases"""
+    # Up arrow
+    key = parse_keypress('\x1b[A')
+    assert key.up_arrow is True
+    assert key.down_arrow is False
+    assert key.left_arrow is False
+    assert key.right_arrow is False
+    
+    # Down arrow
+    key = parse_keypress('\x1b[B')
+    assert key.down_arrow is True
+    
+    # Left arrow
+    key = parse_keypress('\x1b[D')
+    assert key.left_arrow is True
+    
+    # Right arrow
+    key = parse_keypress('\x1b[C')
+    assert key.right_arrow is True
+
+
+def test_key_return_alias():
+    """Test return key has both return_ and return_key aliases"""
+    key = parse_keypress('\r')
+    assert key.return_ is True
+    assert key.return_key is True  # Alias for convenience
+
+
+def test_key_page_snake_case_aliases():
+    """Test page_up and page_down snake_case aliases"""
+    key = parse_keypress('\x1b[5~')  # Page Up
+    assert key.pageUp is True
+    assert key.page_up is True
+    
+    key = parse_keypress('\x1b[6~')  # Page Down
+    assert key.pageDown is True
+    assert key.page_down is True
+
+
+def test_key_all_snake_case_aliases_exist():
+    """Test all snake_case aliases exist as attributes"""
+    key = parse_keypress('a')
+    
+    # All arrow properties should exist in snake_case
+    assert hasattr(key, 'up_arrow')
+    assert hasattr(key, 'down_arrow')
+    assert hasattr(key, 'left_arrow')
+    assert hasattr(key, 'right_arrow')
+    assert hasattr(key, 'page_up')
+    assert hasattr(key, 'page_down')
+    assert hasattr(key, 'return_key')
