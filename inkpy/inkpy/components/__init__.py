@@ -4,6 +4,7 @@
 from .accessibility_context import accessibility_context
 from .background_context import background_context
 from .box import Box
+from .confirm_input import ConfirmInput
 from .error_overview import ErrorOverview
 from .newline import Newline
 from .select_input import SelectInput
@@ -15,6 +16,7 @@ from .transform import Transform
 
 __all__ = [
     "Box",
+    "ConfirmInput",
     "ErrorOverview",
     "Newline",
     "SelectInput",
