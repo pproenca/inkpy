@@ -36,6 +36,8 @@ _app_state = {
     'input_handlers': [],
     'input_thread': None,
     'running': False,
+    '_old_terminal_settings': None,
+    '_terminal_fd': None,
 }
 
 
@@ -74,8 +76,10 @@ def _start_input_thread():
         
         old_settings = None
         try:
-            # Enable raw mode
+            # Save terminal settings for raw mode
             old_settings = termios.tcgetattr(fd)
+            _app_state['_old_terminal_settings'] = old_settings
+            _app_state['_terminal_fd'] = fd
             tty.setraw(fd)
             _app_state['raw_mode'] = True
             
@@ -94,8 +98,19 @@ def _start_input_thread():
                             else:
                                 break
                         
-                        # Process input (decode bytes to string)
-                        _process_input(data.decode('utf-8', errors='replace'))
+                        # Temporarily restore terminal for processing
+                        # (handlers may trigger renders which need normal terminal mode)
+                        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                        _app_state['raw_mode'] = False
+                        
+                        try:
+                            # Process input (decode bytes to string)
+                            _process_input(data.decode('utf-8', errors='replace'))
+                        finally:
+                            # Re-enable raw mode for next input
+                            if _app_state['running']:
+                                tty.setraw(fd)
+                                _app_state['raw_mode'] = True
         except Exception as e:
             pass
         finally:
@@ -106,6 +121,8 @@ def _start_input_thread():
                 except Exception:
                     pass
             _app_state['raw_mode'] = False
+            _app_state['_old_terminal_settings'] = None
+            _app_state['_terminal_fd'] = None
     
     thread = threading.Thread(target=read_input, daemon=True)
     thread.start()
