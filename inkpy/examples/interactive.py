@@ -6,12 +6,10 @@ Uses Pythonic snake_case API:
 - Key properties: key.up_arrow, key.down_arrow, key.return_key
 - Style props: flex_direction, border_style, padding
 """
-import sys
-from reactpy import component, use_state, use_effect
+from reactpy import component, use_state
 from inkpy import render
 from inkpy.components import Box, Text
 from inkpy.hooks import use_input, use_app
-from inkpy.hooks.use_stdin import use_stdin
 
 @component
 def SelectList():
@@ -19,19 +17,7 @@ def SelectList():
     selected, set_selected = use_state(0)
     app = use_app()
     
-    # DEBUG: Check if stdin context is available
-    stdin_ctx = use_stdin()
-    
-    def debug_effect():
-        print(f"DEBUG: stdin_ctx = {stdin_ctx}", file=sys.stderr)
-        print(f"DEBUG: set_raw_mode = {stdin_ctx.get('set_raw_mode') if isinstance(stdin_ctx, dict) else 'not a dict'}", file=sys.stderr)
-        print(f"DEBUG: is_raw_mode_supported = {stdin_ctx.get('is_raw_mode_supported') if isinstance(stdin_ctx, dict) else 'not a dict'}", file=sys.stderr)
-        return None
-    
-    use_effect(debug_effect, dependencies=[])
-    
     def handle_input(input_str, key):
-        print(f"DEBUG: handle_input called with input_str={repr(input_str)}, key.name={key.name}", file=sys.stderr)
         if key.up_arrow:
             set_selected(lambda s: max(0, s - 1))
         elif key.down_arrow:
