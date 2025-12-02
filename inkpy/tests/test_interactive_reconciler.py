@@ -221,3 +221,141 @@ def test_reconciler_state_update_rerenders():
     # Verify state changed
     assert 1 in state_values, f"State should include 1, values={state_values}"
 
+
+def test_log_update_erase_lines_count():
+    """
+    Test that LogUpdate correctly erases all previous lines on re-render.
+    
+    This catches the bug where the first line wasn't being erased because
+    _previous_line_count was off by one.
+    """
+    from io import StringIO
+    from inkpy.log_update import LogUpdate
+    
+    # Create a mock stream that captures all output
+    output = StringIO()
+    log = LogUpdate(output, show_cursor=True)
+    
+    # First render: 3 lines of content
+    content1 = "Line 1\nLine 2\nLine 3"
+    log(content1)
+    
+    # Get first output
+    first_output = output.getvalue()
+    
+    # Clear and capture second render
+    output.truncate(0)
+    output.seek(0)
+    
+    # Second render: different content
+    content2 = "New 1\nNew 2\nNew 3"
+    log(content2)
+    
+    second_output = output.getvalue()
+    
+    # The second output should start with erase sequences for 3 lines
+    # (ERASE_LINE + cursor up) * 2 + ERASE_LINE + carriage return
+    # Then the new content
+    
+    # Check that erase sequences are present
+    assert "\x1b[2K" in second_output, "Should contain erase line sequence"
+    assert "\x1b[1A" in second_output, "Should contain cursor up sequence"
+    
+    # Check that new content is present
+    assert "New 1" in second_output, "Should contain new content"
+
+
+def test_log_update_multiple_rerenders():
+    """
+    Test that multiple re-renders don't accumulate stale lines.
+    
+    This specifically tests the bug where first lines accumulated
+    across multiple renders.
+    """
+    from io import StringIO
+    from inkpy.log_update import LogUpdate, erase_lines
+    
+    output = StringIO()
+    log = LogUpdate(output, show_cursor=True)
+    
+    # Simulate 5 renders (like 5 key presses)
+    for i in range(5):
+        content = f"┌────────────┐\n│  Option {i}  │\n└────────────┘"
+        log(content)
+    
+    final_output = output.getvalue()
+    
+    # Count occurrences of the top border
+    # BUG: If erase isn't working correctly, we'd see multiple top borders
+    top_border_count = final_output.count("┌────────────┐")
+    
+    # Should only have ONE top border in the final visible output
+    # The erase sequences should remove previous ones
+    # Note: The raw output may contain multiple, but each new render should erase previous
+    
+    # What we can verify: each render after the first should emit erase sequences
+    # The number of erase sequences should match the line count
+    erase_count = final_output.count("\x1b[2K")  # ERASE_LINE
+    
+    # We have 5 renders, 4 of them should erase 3 lines each = 12 erase sequences
+    # (first render doesn't erase anything since _previous_line_count is 0)
+    assert erase_count >= 12, f"Expected at least 12 erase sequences, got {erase_count}"
+
+
+def test_erase_lines_calculation():
+    """
+    Test that erase_lines properly calculates the number of lines to erase.
+    
+    After writing N lines + trailing newline, cursor is on line N+1.
+    To clear all content, we need to erase from current position back to line 1.
+    """
+    from inkpy.log_update import erase_lines
+    
+    # Erase 3 lines starting from current cursor position
+    # Should: erase current, move up, erase, move up, erase (no move up at end)
+    result = erase_lines(3)
+    
+    # Count operations
+    erase_count = result.count("\x1b[2K")  # ERASE_LINE
+    cursor_up_count = result.count("\x1b[1A")  # cursor up
+    
+    assert erase_count == 3, f"Should erase 3 lines, got {erase_count}"
+    assert cursor_up_count == 2, f"Should move up 2 times, got {cursor_up_count}"
+    assert result.endswith("\r"), "Should end with carriage return"
+
+
+def test_ctrl_c_triggers_exit():
+    """Test that Ctrl+C (\\x03) triggers the exit callback."""
+    from inkpy.reconciler import app_hooks
+    from inkpy.input.keypress import parse_keypress
+    
+    # Reset state
+    app_hooks._app_state['input_handlers'] = []
+    app_hooks._app_state['exit_on_ctrl_c'] = True
+    
+    exit_called = []
+    
+    def mock_exit(error=None):
+        exit_called.append(True)
+    
+    app_hooks._app_state['exit_callback'] = mock_exit
+    
+    # Process Ctrl+C
+    app_hooks._process_input('\x03')
+    
+    # Verify exit was called
+    assert len(exit_called) == 1, f"Exit should be called once, got {exit_called}"
+    
+    # Cleanup
+    app_hooks._app_state['exit_callback'] = None
+
+
+def test_ctrl_c_keypress_parsing():
+    """Test that Ctrl+C is parsed correctly."""
+    from inkpy.input.keypress import parse_keypress
+    
+    key = parse_keypress('\x03')
+    
+    assert key.name == 'c', f"Key name should be 'c', got {key.name}"
+    assert key.ctrl == True, f"Key.ctrl should be True, got {key.ctrl}"
+

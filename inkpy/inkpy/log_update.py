@@ -132,7 +132,9 @@ class LogUpdate:
         
         self._previous_output = output
         self.stream.write(erase_lines(self._previous_line_count) + output)
-        self._previous_line_count = len(output.split("\n")) - 1  # Subtract 1 for trailing newline
+        # After writing output ending with \n, cursor is on the NEXT line
+        # So _previous_line_count includes that line (to be erased on next render)
+        self._previous_line_count = len(output.split("\n"))
         self.stream.flush()
     
     def _render_incremental(self, text: str) -> None:
@@ -204,7 +206,8 @@ class LogUpdate:
         """Update internal state without writing to stream"""
         output = text + "\n"
         self._previous_output = output
-        self._previous_line_count = len(output.split("\n")) - 1
+        # After writing output ending with \n, cursor is on the NEXT line
+        self._previous_line_count = len(output.split("\n"))
         self._previous_lines = output.split("\n")
 
 

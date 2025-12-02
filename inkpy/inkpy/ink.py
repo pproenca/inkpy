@@ -488,12 +488,20 @@ class Ink:
         
         self.is_unmounted = True
         
-        # Resolve exit promise
+        # Resolve exit promise (thread-safe for when called from input thread)
         if self._exit_promise and not self._exit_promise.done():
-            if error:
-                self._exit_promise.set_exception(error)
-            else:
-                self._exit_promise.set_result(None)
+            try:
+                loop = asyncio.get_running_loop()
+                if error:
+                    loop.call_soon_threadsafe(self._exit_promise.set_exception, error)
+                else:
+                    loop.call_soon_threadsafe(self._exit_promise.set_result, None)
+            except RuntimeError:
+                # No running loop, set directly
+                if error:
+                    self._exit_promise.set_exception(error)
+                else:
+                    self._exit_promise.set_result(None)
     
     async def wait_until_exit(self):
         """Wait for app exit while keeping the interactive lifecycle alive.
