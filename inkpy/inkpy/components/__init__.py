@@ -4,6 +4,7 @@
 from .accessibility_context import accessibility_context
 from .background_context import background_context
 from .box import Box
+from .code_block import CodeBlock
 from .confirm_input import ConfirmInput
 from .error_overview import ErrorOverview
 from .multi_select import MultiSelect
@@ -18,6 +19,7 @@ from .transform import Transform
 
 __all__ = [
     "Box",
+    "CodeBlock",
     "ConfirmInput",
     "ErrorOverview",
     "MultiSelect",
