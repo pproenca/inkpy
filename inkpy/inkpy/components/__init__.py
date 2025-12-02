@@ -9,6 +9,7 @@ from .error_overview import ErrorOverview
 from .newline import Newline
 from .select_input import SelectInput
 from .spacer import Spacer
+from .spinner import Spinner
 from .static import Static
 from .text import Text
 from .text_input import TextInput
@@ -21,6 +22,7 @@ __all__ = [
     "Newline",
     "SelectInput",
     "Spacer",
+    "Spinner",
     "Static",
     "Text",
     "TextInput",
