@@ -9,6 +9,7 @@ from .newline import Newline
 from .spacer import Spacer
 from .static import Static
 from .text import Text
+from .text_input import TextInput
 from .transform import Transform
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     "Spacer",
     "Static",
     "Text",
+    "TextInput",
     "Transform",
     "accessibility_context",
     "background_context",
