@@ -6,6 +6,7 @@ from .background_context import background_context
 from .box import Box
 from .error_overview import ErrorOverview
 from .newline import Newline
+from .select_input import SelectInput
 from .spacer import Spacer
 from .static import Static
 from .text import Text
@@ -16,6 +17,7 @@ __all__ = [
     "Box",
     "ErrorOverview",
     "Newline",
+    "SelectInput",
     "Spacer",
     "Static",
     "Text",
