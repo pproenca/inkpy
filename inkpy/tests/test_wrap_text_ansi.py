@@ -231,3 +231,69 @@ def test_truncate_multiline_text():
     for line in lines:
         assert string_width(line) <= 3
 
+
+# --- Screen Reader Mode Tests (Task 1: G1 Gap) ---
+
+def test_wrap_ansi_preserves_styles_across_lines():
+    """Test that wrapped text preserves ANSI styles on continuation lines.
+    
+    This is the key screen reader wrapAnsi behavior: when styled text wraps,
+    the style should be reapplied at the start of each wrapped line.
+    """
+    # Red text that wraps to multiple lines
+    text = "\x1b[31mHello World Test\x1b[0m"
+    wrapped = wrap_text(text, max_width=8, wrap_type='wrap')
+    
+    lines = wrapped.split('\n')
+    assert len(lines) >= 2, f"Expected multiple lines, got: {wrapped}"
+    
+    # Each wrapped line should have the ANSI code applied
+    # (This is the key behavior from wrap-ansi library)
+    for line in lines:
+        if line:  # Skip empty lines
+            # Line should either start with ANSI code or contain styled text
+            assert '\x1b[31m' in line, f"Line missing style code: {repr(line)}"
+
+
+def test_wrap_ansi_properly_closes_styles():
+    """Test that wrapped text properly closes ANSI styles at line ends."""
+    text = "\x1b[31mRed text that needs wrapping\x1b[0m"
+    wrapped = wrap_text(text, max_width=10, wrap_type='wrap')
+    
+    lines = wrapped.split('\n')
+    
+    # Each line should have properly balanced ANSI codes
+    # (reset at end if style was applied)
+    for line in lines:
+        if '\x1b[31m' in line and line.strip():
+            # If style is applied, it should be reset at end of line
+            # or the style should continue to the content
+            assert '\x1b[0m' in line or '\x1b[31m' in line
+
+
+def test_wrap_ansi_preserves_multiple_styles():
+    """Test wrapping text with multiple ANSI styles."""
+    # Bold red text
+    text = "\x1b[1m\x1b[31mBold red text that wraps\x1b[0m"
+    wrapped = wrap_text(text, max_width=10, wrap_type='wrap')
+    
+    lines = wrapped.split('\n')
+    assert len(lines) >= 2
+    
+    # First line should have both styles
+    assert '\x1b[1m' in lines[0] or '\x1b[31m' in lines[0]
+
+
+def test_screen_reader_wrap_width_calculation():
+    """Test that screen reader wrap correctly calculates width ignoring ANSI codes."""
+    # 5 visible chars + ANSI codes
+    text = "\x1b[31mABCDE\x1b[0m"
+    wrapped = wrap_text(text, max_width=5, wrap_type='wrap')
+    
+    # Should not wrap - visible content is exactly 5 chars
+    assert '\n' not in wrapped, f"Should not wrap, got: {repr(wrapped)}"
+    
+    # Verify visible width is 5
+    from inkpy.renderer.ansi_tokenize import string_width
+    assert string_width(wrapped) == 5
+

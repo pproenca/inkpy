@@ -49,6 +49,9 @@ def _wrap_ansi(text: str, max_width: int) -> str:
     """
     Wrap text preserving ANSI codes using ANSI-aware width calculation.
     Wraps at word boundaries when possible, falls back to character boundaries for CJK.
+    
+    Key behavior: ANSI styles are preserved across wrapped lines.
+    When a styled line wraps, the style is reapplied at the start of continuation lines.
     """
     lines = text.split('\n')
     wrapped_lines = []
@@ -58,11 +61,20 @@ def _wrap_ansi(text: str, max_width: int) -> str:
         if line_width <= max_width:
             wrapped_lines.append(line)
         else:
+            # Extract active ANSI styles from the line
+            active_styles = _extract_active_styles(line)
+            
             # Split into words and wrap using ANSI-aware width
             words = _split_preserving_ansi(line)
             current_line = ''
+            current_styles = active_styles.copy()  # Track styles for current line
             
             for word in words:
+                # Update current styles based on ANSI codes in this word
+                word_styles = _extract_active_styles(word)
+                if word_styles:
+                    current_styles = word_styles
+                
                 word_width = string_width(word)
                 current_width = string_width(current_line)
                 space_width = 1 if current_line else 0
@@ -72,25 +84,37 @@ def _wrap_ansi(text: str, max_width: int) -> str:
                     current_line += (' ' if current_line else '') + word
                 elif word_width <= max_width:
                     # Word doesn't fit, but is smaller than max_width
-                    # Start new line with this word
+                    # Finish current line and start new line with this word
                     if current_line:
+                        # Close styles at end of line if needed
+                        if _has_open_styles(current_line):
+                            current_line += '\x1b[0m'
                         wrapped_lines.append(current_line)
-                    current_line = word
+                    
+                    # Start new line with active styles + word
+                    if current_styles:
+                        current_line = ''.join(current_styles) + word
+                    else:
+                        current_line = word
                 else:
                     # Word is too long - need to break it
                     if current_line:
+                        if _has_open_styles(current_line):
+                            current_line += '\x1b[0m'
                         wrapped_lines.append(current_line)
                         current_line = ''
                     
                     # Break word into chunks using ANSI-aware slicing
                     word_start = 0
                     while word_start < len(word):
-                        # Try to find a good break point (space, punctuation)
-                        # For now, just slice by width
                         chunk = slice_ansi(word, word_start, word_start + max_width)
                         if chunk:
+                            # Apply styles to chunk if not first chunk from this word
+                            if word_start > 0 and current_styles:
+                                chunk = ''.join(current_styles) + chunk
+                            if _has_open_styles(chunk):
+                                chunk += '\x1b[0m'
                             wrapped_lines.append(chunk)
-                            # Calculate how much we consumed
                             chunk_width = string_width(chunk)
                             word_start += chunk_width
                         else:
@@ -100,6 +124,46 @@ def _wrap_ansi(text: str, max_width: int) -> str:
                 wrapped_lines.append(current_line)
     
     return '\n'.join(wrapped_lines)
+
+
+def _extract_active_styles(text: str) -> list:
+    """
+    Extract active ANSI style codes from text.
+    Returns list of ANSI codes that are "active" (not reset).
+    """
+    tokens = tokenize_ansi(text)
+    active = []
+    
+    for token in tokens:
+        if token.get('type') == 'ansi':
+            code = token.get('value', '')
+            if code == '\x1b[0m':
+                # Reset clears all styles
+                active = []
+            else:
+                # Add style (avoid duplicates)
+                if code not in active:
+                    active.append(code)
+    
+    return active
+
+
+def _has_open_styles(text: str) -> bool:
+    """
+    Check if text has ANSI styles that are not closed with reset.
+    """
+    tokens = tokenize_ansi(text)
+    has_style = False
+    
+    for token in tokens:
+        if token.get('type') == 'ansi':
+            code = token.get('value', '')
+            if code == '\x1b[0m':
+                has_style = False
+            else:
+                has_style = True
+    
+    return has_style
 
 def _truncate_text(text: str, max_width: int, truncate_type: str) -> str:
     """
