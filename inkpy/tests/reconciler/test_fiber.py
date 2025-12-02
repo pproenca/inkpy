@@ -1,6 +1,5 @@
 # tests/reconciler/test_fiber.py
-import pytest
-from inkpy.reconciler.fiber import FiberNode, FiberTag, create_fiber
+from inkpy.reconciler.fiber import FiberTag, create_fiber
 
 
 def test_create_host_fiber():
@@ -47,4 +46,3 @@ def test_fiber_alternate():
 
     assert fiber1.alternate is fiber2
     assert fiber2.alternate is fiber1
-

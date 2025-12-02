@@ -34,6 +34,7 @@ inkpy/components/static.py
 inkpy/components/stderr_context.py
 inkpy/components/stdin_context.py
 inkpy/components/stdout_context.py
+inkpy/components/style_props.py
 inkpy/components/text.py
 inkpy/components/transform.py
 inkpy/hooks/__init__.py
@@ -52,6 +53,15 @@ inkpy/layout/__init__.py
 inkpy/layout/styles.py
 inkpy/layout/text_node.py
 inkpy/layout/yoga_node.py
+inkpy/reconciler/__init__.py
+inkpy/reconciler/app_hooks.py
+inkpy/reconciler/component.py
+inkpy/reconciler/components.py
+inkpy/reconciler/element.py
+inkpy/reconciler/fiber.py
+inkpy/reconciler/focus_hooks.py
+inkpy/reconciler/hooks.py
+inkpy/reconciler/reconciler.py
 inkpy/renderer/__init__.py
 inkpy/renderer/ansi_tokenize.py
 inkpy/renderer/background.py
@@ -69,6 +79,7 @@ tests/test_app_input.py
 tests/test_background.py
 tests/test_borders.py
 tests/test_box_aria.py
+tests/test_box_style_props.py
 tests/test_colorize.py
 tests/test_components.py
 tests/test_console_patch.py
@@ -82,11 +93,15 @@ tests/test_get_max_width.py
 tests/test_ink.py
 tests/test_ink_full.py
 tests/test_integration.py
+tests/test_interactive_reconciler.py
 tests/test_keypress.py
+tests/test_layout_lifecycle.py
 tests/test_log_update.py
 tests/test_measure_element.py
 tests/test_measure_function.py
+tests/test_measure_text_ansi.py
 tests/test_output.py
+tests/test_reconciler_integration.py
 tests/test_render.py
 tests/test_render_integration.py
 tests/test_render_node.py
@@ -97,6 +112,8 @@ tests/test_styles.py
 tests/test_text_background.py
 tests/test_text_measurement.py
 tests/test_text_screen_reader.py
+tests/test_text_style_props.py
+tests/test_throttle.py
 tests/test_transform.py
 tests/test_tui_backend.py
 tests/test_tui_backend_hide.py

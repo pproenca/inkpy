@@ -3,7 +3,9 @@ Spacer component module.
 
 A flexible space that expands along the major axis.
 """
+
 from reactpy import component
+
 from .box import Box
 
 
@@ -11,7 +13,7 @@ from .box import Box
 def Spacer():
     """
     A flexible space that expands to fill available space.
-    
+
     Example:
         Box([
             Text("Left"),
@@ -19,5 +21,4 @@ def Spacer():
             Text("Right")
         ])
     """
-    return Box(style={'flexGrow': 1})
-
+    return Box(style={"flexGrow": 1})

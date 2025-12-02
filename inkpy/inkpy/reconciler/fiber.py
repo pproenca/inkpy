@@ -6,9 +6,10 @@ Based on React Fiber architecture:
 - Fibers form a linked list tree structure
 - Double buffering via alternate pointers
 """
-from enum import IntEnum, auto
-from typing import Any, Dict, Optional, Callable, Union, List
+
 from dataclasses import dataclass, field
+from enum import IntEnum, auto
+from typing import Any, Callable, Optional, Union
 
 
 class FiberTag(IntEnum):
@@ -48,7 +49,7 @@ class FiberNode:
     key: Optional[str] = None
 
     # Props and state
-    props: Dict[str, Any] = field(default_factory=dict)
+    props: dict[str, Any] = field(default_factory=dict)
     memoized_state: Any = None  # For hooks
 
     # Tree structure (linked list)
@@ -65,17 +66,17 @@ class FiberNode:
 
     # Effects
     effect_tag: EffectTag = EffectTag.NONE
-    effects: List["FiberNode"] = field(default_factory=list)
+    effects: list["FiberNode"] = field(default_factory=list)
 
     # Hooks
-    hooks: List[Any] = field(default_factory=list)
+    hooks: list[Any] = field(default_factory=list)
     hook_index: int = 0
 
 
 def create_fiber(
     tag: FiberTag,
     element_type: Union[str, Callable, None],
-    props: Dict[str, Any],
+    props: dict[str, Any],
     key: Optional[str] = None,
 ) -> FiberNode:
     """Factory function to create a fiber node"""
@@ -94,4 +95,3 @@ def create_root_fiber() -> FiberNode:
         element_type=None,
         props={},
     )
-

@@ -3,8 +3,11 @@ Tests for App component error boundary functionality.
 
 Following TDD: Write failing test first, then implement.
 """
+
 import io
+
 from reactpy import component
+
 from inkpy.components.app import App
 
 
@@ -13,11 +16,11 @@ def test_app_catches_errors_in_children():
     stdout = io.StringIO()
     stdin = io.StringIO()
     stderr = io.StringIO()
-    
+
     @component
     def BrokenComponent():
         raise ValueError("Test error")
-    
+
     # App should catch the error and show ErrorOverview
     # This requires full rendering, so we'll test the structure
     app = App(
@@ -28,7 +31,7 @@ def test_app_catches_errors_in_children():
         write_to_stdout=lambda x: stdout.write(x),
         write_to_stderr=lambda x: stderr.write(x),
     )
-    
+
     # Should not raise - error should be caught
     assert app is not None
 
@@ -45,16 +48,16 @@ def test_app_calls_on_exit_with_error():
     stdout = io.StringIO()
     stdin = io.StringIO()
     stderr = io.StringIO()
-    
+
     errors_received = []
-    
+
     def on_exit(error):
         errors_received.append(error)
-    
+
     @component
     def BrokenComponent():
         raise ValueError("Test error")
-    
+
     app = App(
         children=BrokenComponent(),
         stdin=stdin,
@@ -64,8 +67,7 @@ def test_app_calls_on_exit_with_error():
         write_to_stderr=lambda x: stderr.write(x),
         on_exit=on_exit,
     )
-    
+
     # Error should trigger on_exit
     # This requires full rendering context
     assert app is not None
-

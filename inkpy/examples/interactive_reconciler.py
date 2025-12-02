@@ -7,14 +7,15 @@ Demonstrates:
 - Keyboard navigation
 - Clean exit handling
 """
+
 from inkpy import render
 from inkpy.reconciler import (
-    component,
-    use_state,
-    use_input,
-    use_app,
     Box,
     Text,
+    component,
+    use_app,
+    use_input,
+    use_state,
 )
 
 
@@ -24,7 +25,7 @@ def SelectList():
     items = ["Option 1", "Option 2", "Option 3", "Exit"]
     selected, set_selected = use_state(0)
     app = use_app()
-    
+
     def handle_input(input_str, key):
         if key.up_arrow:
             set_selected(lambda s: max(0, s - 1))
@@ -33,9 +34,9 @@ def SelectList():
         elif key.return_key:
             if selected == len(items) - 1:  # Exit option
                 app.exit()
-    
+
     use_input(handle_input)
-    
+
     return Box(
         *[
             Text(
@@ -56,7 +57,7 @@ if __name__ == "__main__":
     instance = render(SelectList())
     try:
         import asyncio
+
         asyncio.run(instance.wait_until_exit())
     except KeyboardInterrupt:
         instance.unmount()
-

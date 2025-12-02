@@ -3,9 +3,11 @@ Component Decorator - Creates function components for the reconciler.
 
 Similar to ReactPy's @component but works with our custom reconciler.
 """
-from typing import Callable, Any
+
 from functools import wraps
-from inkpy.reconciler.element import create_element, Element
+from typing import Callable
+
+from inkpy.reconciler.element import Element, create_element
 
 
 def component(func: Callable) -> Callable[..., Element]:
@@ -28,6 +30,7 @@ def component(func: Callable) -> Callable[..., Element]:
     Returns:
         Wrapper that creates an Element with the function as type
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs) -> Element:
         # If called with positional args, treat first as children
@@ -42,4 +45,3 @@ def component(func: Callable) -> Callable[..., Element]:
     wrapper.__wrapped__ = func
 
     return wrapper
-

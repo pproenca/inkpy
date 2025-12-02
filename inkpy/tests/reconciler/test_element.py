@@ -1,6 +1,5 @@
 # tests/reconciler/test_element.py
-import pytest
-from inkpy.reconciler.element import create_element, Element
+from inkpy.reconciler.element import create_element
 
 
 def test_create_element_with_type():
@@ -48,4 +47,3 @@ def test_create_element_with_key():
 
     assert element.key == "unique-id"
     assert "key" not in element.props  # key should be extracted
-

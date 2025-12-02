@@ -12,4 +12,3 @@ def test_use_stdin_returns_stdin():
     # In ReactPy component context, this would return stdin object
     # For now, verify the hook exists
     assert callable(use_stdin)
-

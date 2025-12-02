@@ -2,4 +2,4 @@
 
 from inkpy.input.event_emitter import EventEmitter
 
-__all__ = ['EventEmitter']
+__all__ = ["EventEmitter"]

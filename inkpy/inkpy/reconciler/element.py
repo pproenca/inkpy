@@ -4,8 +4,9 @@ Element - Immutable description of what to render.
 Similar to React.createElement() - creates element descriptors
 that the reconciler uses to build the fiber tree.
 """
-from typing import Any, Dict, Optional, Callable, Union
+
 from dataclasses import dataclass
+from typing import Any, Callable, Optional, Union
 
 
 @dataclass(frozen=True)
@@ -18,13 +19,13 @@ class Element:
     """
 
     type: Union[str, Callable]  # "ink-box" or component function
-    props: Dict[str, Any]
+    props: dict[str, Any]
     key: Optional[str] = None
 
 
 def create_element(
     element_type: Union[str, Callable],
-    props: Optional[Dict[str, Any]] = None,
+    props: Optional[dict[str, Any]] = None,
     *children: Any,
 ) -> Element:
     """
@@ -75,4 +76,3 @@ def create_element(
 
 # Convenience alias
 h = create_element
-

@@ -1,11 +1,12 @@
 import poga
 
+
 class MyView(poga.PogaView):
     def __init__(self, name="View"):
         self.name = name
         self.children = []
         self.layout = poga.PogaLayout(self)
-        self.frame = {'x': 0, 'y': 0, 'width': 0, 'height': 0}
+        self.frame = {"x": 0, "y": 0, "width": 0, "height": 0}
 
     def poga_layout(self):
         return self.layout
@@ -21,16 +22,17 @@ class MyView(poga.PogaView):
 
     def set_frame_position_and_size(self, x, y, w, h):
         # print(f"{self.name}: set_frame x={x} y={y} w={w} h={h}")
-        self.frame = {'x': x, 'y': y, 'width': w, 'height': h}
+        self.frame = {"x": x, "y": y, "width": w, "height": h}
 
     def bounds_size(self):
-        return (self.frame['width'], self.frame['height'])
+        return (self.frame["width"], self.frame["height"])
 
     def frame_origin(self):
-        return (self.frame['x'], self.frame['y'])
+        return (self.frame["x"], self.frame["y"])
 
     def size_that_fits(self, w, h):
         return (0, 0)
+
 
 def test():
     root = MyView("Root")
@@ -55,10 +57,11 @@ def test():
     print(f"Root: {root.frame}")
     print(f"Child: {child.frame}")
 
-    if child.frame['y'] == 40:
+    if child.frame["y"] == 40:
         print("SUCCESS: Child centered vertically via align_self")
     else:
         print(f"FAILURE: Child not centered. y={child.frame['y']}")
+
 
 if __name__ == "__main__":
     test()

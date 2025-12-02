@@ -16,6 +16,18 @@ dependencies = [
 ]
 requires-python = ">=3.9"
 
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "pre-commit>=4.0.0",
+]
+
+# ============================================================================
+# Pytest Configuration
+# ============================================================================
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
@@ -26,8 +38,82 @@ filterwarnings = [
     "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
 ]
 
-[dependency-groups]
-dev = [
-    "pytest>=8.4.2",
-    "pytest-asyncio>=1.2.0",
+# ============================================================================
+# Ruff Configuration
+# ============================================================================
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+src = ["inkpy", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+    "TCH",    # flake8-type-checking
+    "PTH",    # flake8-use-pathlib
+    "RUF",    # Ruff-specific rules
 ]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B007",   # unused loop control variable (rename to _ if desired)
+    "B008",   # do not perform function calls in argument defaults
+    "B905",   # zip without strict= (Python 3.9 compat)
+    "ARG001", # unused function argument (common in hooks)
+    "ARG002", # unused method argument
+    "ARG005", # unused lambda argument (common in context defaults)
+    "PTH",    # pathlib suggestions (os.path is fine)
+    "SIM102", # nested if statements (readability preference)
+    "SIM108", # ternary operator (readability preference)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["inkpy"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "ARG",    # Unused arguments are common in test fixtures
+    "S101",   # assert is fine in tests
+]
+
+# ============================================================================
+# Mypy Configuration
+# ============================================================================
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = false  # Too noisy for gradual typing
+warn_unused_configs = true
+warn_unused_ignores = false  # Allow suppressing errors that may not exist
+strict_optional = false  # Too strict for initial adoption
+check_untyped_defs = false  # Gradual typing - start permissive
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+ignore_missing_imports = true  # Third-party libs may not have stubs
+show_error_codes = true
+show_column_numbers = true
+# Disable specific error codes that are too noisy for gradual adoption
+disable_error_code = [
+    "arg-type",         # Argument type mismatches
+    "assignment",       # Type assignment mismatches
+    "attr-defined",     # Attribute not defined
+    "call-overload",    # Overload resolution
+    "index",            # Indexing issues
+    "misc",             # Miscellaneous errors
+    "no-any-return",    # Return Any from typed function
+    "operator",         # Operator type mismatches
+    "override",         # Method override mismatches
+    "truthy-function",  # Function truthiness
+    "union-attr",       # Union attribute access
+    "var-annotated",    # Missing annotations
+]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true

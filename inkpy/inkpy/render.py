@@ -1,36 +1,40 @@
 """
 Render function - Public API for rendering InkPy applications
 """
-from typing import Optional, TextIO, Callable
+
 import sys
+from typing import Callable, Optional, TextIO
+
 from inkpy.ink import Ink
 from inkpy.instances import instances
 
+
 class Instance:
     """Represents a rendered Ink application instance"""
-    
+
     def __init__(self, ink: Ink):
         self._ink = ink
-    
+
     def rerender(self, node):
         """Re-render with a new component tree"""
         self._ink.render(node)
-    
+
     def unmount(self, error: Optional[Exception] = None):
         """Unmount the application"""
         self._ink.unmount(error)
-    
+
     async def wait_until_exit(self):
         """Wait until the application exits"""
         return await self._ink.wait_until_exit()
-    
+
     def clear(self):
         """Clear the output"""
         self._ink.clear()
-    
+
     def cleanup(self):
         """Remove instance from registry"""
-        instances.delete(self._ink.options['stdout'])
+        instances.delete(self._ink.options["stdout"])
+
 
 def render(
     node,
@@ -45,7 +49,7 @@ def render(
 ) -> Instance:
     """
     Mount a component and render the output.
-    
+
     Args:
         node: ReactPy component to render
         stdout: Output stream (default: sys.stdout)
@@ -56,26 +60,27 @@ def render(
         patch_console: Patch console methods
         max_fps: Maximum frames per second
         incremental_rendering: Enable incremental rendering
-    
+
     Returns:
         Instance object with rerender, unmount, wait_until_exit, clear methods
     """
     options = {
-        'stdout': stdout or sys.stdout,
-        'stdin': stdin or sys.stdin,
-        'stderr': stderr or sys.stderr,
-        'debug': debug,
-        'exit_on_ctrl_c': exit_on_ctrl_c,
-        'patch_console': patch_console,
-        'max_fps': max_fps,
-        'incremental_rendering': incremental_rendering,
+        "stdout": stdout or sys.stdout,
+        "stdin": stdin or sys.stdin,
+        "stderr": stderr or sys.stderr,
+        "debug": debug,
+        "exit_on_ctrl_c": exit_on_ctrl_c,
+        "patch_console": patch_console,
+        "max_fps": max_fps,
+        "incremental_rendering": incremental_rendering,
     }
-    
+
     # Get or create Ink instance for this stdout
-    ink = get_instance(options['stdout'], lambda: Ink(**options))
+    ink = get_instance(options["stdout"], lambda: Ink(**options))
     ink.render(node)
-    
+
     return Instance(ink)
+
 
 def get_instance(stdout: TextIO, factory: Callable[[], Ink]) -> Ink:
     """Get or create Ink instance for stdout stream"""
@@ -84,4 +89,3 @@ def get_instance(stdout: TextIO, factory: Callable[[], Ink]) -> Ink:
         instance = factory()
         instances.set(stdout, instance)
     return instance
-

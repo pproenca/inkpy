@@ -1,8 +1,6 @@
 # tests/reconciler/test_reconciler.py
-import pytest
-from inkpy.reconciler.reconciler import Reconciler
 from inkpy.reconciler.element import create_element
-from inkpy.reconciler.fiber import FiberTag
+from inkpy.reconciler.reconciler import Reconciler
 
 
 def test_reconciler_initial_render():
@@ -14,9 +12,7 @@ def test_reconciler_initial_render():
 
     reconciler = Reconciler(on_commit=on_commit)
 
-    element = create_element("ink-box", {"padding": 1},
-        create_element("ink-text", {}, "Hello")
-    )
+    element = create_element("ink-box", {"padding": 1}, create_element("ink-text", {}, "Hello"))
 
     reconciler.render(element)
 
@@ -88,8 +84,8 @@ def test_reconciler_batched_updates():
     def MultiState(props):
         a, set_a = use_state(0)
         b, set_b = use_state(0)
-        setters['a'] = set_a
-        setters['b'] = set_b
+        setters["a"] = set_a
+        setters["b"] = set_b
         renders.append((a, b))
         return create_element("ink-text", {}, f"{a},{b}")
 
@@ -99,12 +95,13 @@ def test_reconciler_batched_updates():
     assert renders == [(0, 0)]
 
     # Batch multiple updates
-    reconciler.batch_updates(lambda: (
-        setters['a'](1),
-        setters['b'](2),
-    ))
+    reconciler.batch_updates(
+        lambda: (
+            setters["a"](1),
+            setters["b"](2),
+        )
+    )
     reconciler.flush_sync()
 
     # Should only render once with both updates
     assert renders == [(0, 0), (1, 2)]
-

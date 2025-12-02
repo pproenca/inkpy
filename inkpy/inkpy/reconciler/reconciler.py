@@ -7,17 +7,23 @@ Implements a simplified React Fiber reconciler that:
 3. Commits changes to DOM
 4. Handles state updates synchronously
 """
-from typing import Any, Callable, Optional, List, Dict, Union
-from inkpy.reconciler.fiber import (
-    FiberNode, FiberTag, EffectTag, create_fiber, create_root_fiber
-)
-from inkpy.reconciler.element import Element
-from inkpy.reconciler.hooks import HooksContext
+
+import contextlib
+from typing import Any, Callable, Optional, Union
+
 from inkpy.dom import (
-    create_node, create_text_node, append_child_node,
-    remove_child_node, set_style, set_attribute, DOMElement
+    DOMElement,
+    append_child_node,
+    create_node,
+    create_text_node,
+    remove_child_node,
+    set_attribute,
+    set_style,
 )
 from inkpy.layout.styles import apply_styles
+from inkpy.reconciler.element import Element
+from inkpy.reconciler.fiber import EffectTag, FiberNode, FiberTag, create_fiber
+from inkpy.reconciler.hooks import HooksContext
 
 
 class Reconciler:
@@ -44,13 +50,13 @@ class Reconciler:
         self.root_dom: Optional[DOMElement] = None
 
         # Update queue
-        self._pending_updates: List[Callable] = []
+        self._pending_updates: list[Callable] = []
         self._is_batching = False
         self._needs_render = False
 
         # Deletions to process
-        self._deletions: List[FiberNode] = []
-        
+        self._deletions: list[FiberNode] = []
+
         # Track current element for re-renders
         self._current_element: Optional[Element] = None
 
@@ -63,7 +69,7 @@ class Reconciler:
         """
         # Store current element for re-renders
         self._current_element = element
-        
+
         # Create root DOM if needed
         if self.root_dom is None:
             self.root_dom = create_node("ink-root")
@@ -137,7 +143,7 @@ class Reconciler:
     def _update_function_component(self, fiber: FiberNode) -> None:
         """Update a function component fiber"""
         import inspect
-        
+
         # Set up hooks context
         with HooksContext(fiber, on_state_change=self.schedule_update):
             # Call the component function
@@ -146,17 +152,17 @@ class Reconciler:
             func = fiber.element_type
             sig = inspect.signature(func)
             params = sig.parameters
-            
+
             if not params:
                 # No parameters - call with no arguments
                 children = func()
-            elif len(params) == 1 and list(params.keys())[0] == 'props':
+            elif len(params) == 1 and next(iter(params.keys())) == "props":
                 # Single 'props' parameter - pass as dict
                 children = func(fiber.props)
             else:
                 # Multiple parameters or named parameters - pass as kwargs
                 # Filter out 'children' which is handled separately by the reconciler
-                kwargs = {k: v for k, v in fiber.props.items() if k != 'children'}
+                kwargs = {k: v for k, v in fiber.props.items() if k != "children"}
                 children = func(**kwargs)
 
         # Normalize children
@@ -204,9 +210,7 @@ class Reconciler:
         return node
 
     def _reconcile_children(
-        self,
-        parent_fiber: FiberNode,
-        elements: List[Union[Element, str, None]]
+        self, parent_fiber: FiberNode, elements: list[Union[Element, str, None]]
     ) -> None:
         """
         Reconcile children elements against existing fibers.
@@ -225,9 +229,9 @@ class Reconciler:
 
             # Check if same type
             same_type = (
-                old_fiber and
-                element and
-                self._get_element_type(element) == self._get_fiber_type(old_fiber)
+                old_fiber
+                and element
+                and self._get_element_type(element) == self._get_fiber_type(old_fiber)
             )
 
             if same_type:
@@ -302,7 +306,7 @@ class Reconciler:
             return "#text"
         return element.type
 
-    def _get_element_props(self, element: Union[Element, str]) -> Dict:
+    def _get_element_props(self, element: Union[Element, str]) -> dict:
         """Get props from an element"""
         if isinstance(element, str):
             return {"text": element}
@@ -342,31 +346,31 @@ class Reconciler:
 
         if self.on_commit and self.root_dom:
             self.on_commit(self.root_dom)
-        
+
         # Run effects AFTER commit (like React's useEffect)
         self._run_effects()
-    
+
     def _run_effects(self) -> None:
         """Run all pending effects after commit phase."""
         if self.current_root and self.current_root.child:
             self._run_fiber_effects(self.current_root.child)
-    
+
     def _run_fiber_effects(self, fiber: FiberNode) -> None:
         """Recursively run effects for a fiber and its children."""
         if not fiber:
             return
-        
+
         # Run effects for function components
         if fiber.tag == FiberTag.FUNCTION_COMPONENT:
             for hook in fiber.hooks:
                 # Check if it's an effect hook with a callback
-                if hasattr(hook, 'callback') and callable(hook.callback):
+                if hasattr(hook, "callback") and callable(hook.callback):
                     # Check if this effect needs to run
                     # Effect runs if:
                     # 1. Never run before (_last_deps is None)
                     # 2. Dependencies changed
                     should_run = False
-                    if not hasattr(hook, '_last_deps'):
+                    if not hasattr(hook, "_last_deps"):
                         # First run
                         should_run = True
                     elif hook.deps is None:
@@ -378,15 +382,13 @@ class Reconciler:
                     elif self._deps_changed(hook._last_deps, hook.deps):
                         # Deps changed
                         should_run = True
-                    
+
                     if should_run:
                         # Run cleanup from previous render if exists
-                        if hasattr(hook, 'cleanup') and callable(hook.cleanup):
-                            try:
+                        if hasattr(hook, "cleanup") and callable(hook.cleanup):
+                            with contextlib.suppress(Exception):
                                 hook.cleanup()
-                            except Exception:
-                                pass
-                        
+
                         # Run the effect and store cleanup
                         try:
                             cleanup = hook.callback()
@@ -394,40 +396,35 @@ class Reconciler:
                             hook._last_deps = hook.deps.copy() if hook.deps else None
                         except Exception:
                             pass
-        
+
         # Recurse to children and siblings
         self._run_fiber_effects(fiber.child)
         self._run_fiber_effects(fiber.sibling)
-    
+
     def _deps_changed(self, old_deps: list, new_deps: list) -> bool:
         """Check if effect dependencies have changed."""
         if old_deps is None or new_deps is None:
             return True
         if len(old_deps) != len(new_deps):
             return True
-        for old, new in zip(old_deps, new_deps):
-            if old is not new and old != new:
-                return True
-        return False
-    
+        return any(old is not new and old != new for old, new in zip(old_deps, new_deps))
+
     def run_cleanup(self) -> None:
         """Run all effect cleanups (called on unmount)."""
         if self.current_root and self.current_root.child:
             self._run_cleanup_recursive(self.current_root.child)
-    
+
     def _run_cleanup_recursive(self, fiber: FiberNode) -> None:
         """Recursively run cleanup for all effect hooks."""
         if not fiber:
             return
-        
+
         if fiber.tag == FiberTag.FUNCTION_COMPONENT:
             for hook in fiber.hooks:
-                if hasattr(hook, 'cleanup') and callable(hook.cleanup):
-                    try:
+                if hasattr(hook, "cleanup") and callable(hook.cleanup):
+                    with contextlib.suppress(Exception):
                         hook.cleanup()
-                    except Exception:
-                        pass
-        
+
         self._run_cleanup_recursive(fiber.child)
         self._run_cleanup_recursive(fiber.sibling)
 
@@ -470,22 +467,17 @@ class Reconciler:
             # Function component - recurse to find DOM
             self._commit_deletion(fiber.child)
 
-    def _update_dom(
-        self,
-        dom,
-        old_props: Dict,
-        new_props: Dict
-    ) -> None:
+    def _update_dom(self, dom, old_props: dict, new_props: dict) -> None:
         """Update DOM node properties"""
         from inkpy.dom import TextNode, set_text_node_value
-        
+
         # Handle text nodes specially
         if isinstance(dom, TextNode):
             new_text = new_props.get("text", "")
             if dom.node_value != new_text:
                 set_text_node_value(dom, new_text)
             return
-        
+
         # Remove old props
         for key in old_props:
             if key == "children":
@@ -507,4 +499,3 @@ class Reconciler:
                         apply_styles(dom.yoga_node, value)
                 else:
                     set_attribute(dom, key, value)
-

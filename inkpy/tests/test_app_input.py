@@ -3,6 +3,7 @@ Tests for App component input loop functionality.
 
 Following TDD: Write failing test first, then implement.
 """
+
 import io
 from unittest.mock import Mock
 
@@ -17,14 +18,14 @@ def test_app_creates_event_emitter():
 def test_app_input_loop_emits_events():
     """Test that App component reads stdin and emits events"""
     # Mock stdin with readable data
-    mock_stdin = io.StringIO('a')
-    mock_stdin.read = Mock(return_value='a')
-    
+    mock_stdin = io.StringIO("a")
+    mock_stdin.read = Mock(return_value="a")
+
     captured_events = []
-    
+
     def capture_event(data):
         captured_events.append(data)
-    
+
     # This will require App to set up input loop
     # For now, just verify the structure exists
     pass  # Will implement after input loop is added
@@ -55,4 +56,3 @@ def test_app_handles_escape():
     """Test that App clears focus on Escape key"""
     # Escape should clear active focus
     pass  # Will implement after Escape handling is added
-

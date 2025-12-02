@@ -6,8 +6,8 @@ def test_output_write():
     output = Output(width=20, height=10)
     output.write(5, 2, "Hello", transformers=[])
     result = output.get()
-    assert "Hello" in result['output']
-    assert result['height'] == 10
+    assert "Hello" in result["output"]
+    assert result["height"] == 10
 
 
 def test_output_multiline():
@@ -15,7 +15,7 @@ def test_output_multiline():
     output = Output(width=20, height=10)
     output.write(0, 0, "Line1\nLine2", transformers=[])
     result = output.get()
-    lines = result['output'].split('\n')
+    lines = result["output"].split("\n")
     assert "Line1" in lines[0]
     assert "Line2" in lines[1]
 
@@ -29,7 +29,7 @@ def test_output_clip():
     result = output.get()
     # "Hello World" starts at 0, clip at 2-8, so we should see "llo Wor"
     # But we need to check the actual output structure
-    assert len(result['output']) > 0
+    assert len(result["output"]) > 0
 
 
 def test_output_clip_outside():
@@ -39,7 +39,7 @@ def test_output_clip_outside():
     output.write(10, 0, "Outside", transformers=[])  # Completely outside
     output.unclip()
     result = output.get()
-    assert "Outside" not in result['output']
+    assert "Outside" not in result["output"]
 
 
 def test_output_nested_clips():
@@ -52,18 +52,19 @@ def test_output_nested_clips():
     output.unclip()
     result = output.get()
     # Text should be clipped by both regions
-    assert len(result['output']) >= 0
+    assert len(result["output"]) >= 0
 
 
 def test_output_transformers():
     """Test applying transformers to text"""
+
     def uppercase_transformer(line: str, index: int) -> str:
         return line.upper()
-    
+
     output = Output(width=20, height=10)
     output.write(0, 0, "hello", transformers=[uppercase_transformer])
     result = output.get()
-    assert "HELLO" in result['output']
+    assert "HELLO" in result["output"]
 
 
 def test_output_empty_text():
@@ -71,7 +72,7 @@ def test_output_empty_text():
     output = Output(width=20, height=10)
     output.write(0, 0, "", transformers=[])
     result = output.get()
-    assert result['output'] is not None
+    assert result["output"] is not None
 
 
 def test_output_bounds():
@@ -80,7 +81,7 @@ def test_output_bounds():
     output.write(0, 0, "This is a very long line that exceeds width", transformers=[])
     result = output.get()
     # Should not crash, but may truncate or wrap
-    assert result['height'] == 3
+    assert result["height"] == 3
 
 
 def test_output_preserves_ansi_codes():
@@ -89,10 +90,10 @@ def test_output_preserves_ansi_codes():
     red_text = "\x1b[31mRed\x1b[0m"
     output.write(0, 0, red_text, transformers=[])
     result = output.get()
-    
+
     # ANSI codes should be preserved in output
-    assert '\x1b[31m' in result['output']
-    assert 'Red' in result['output']
+    assert "\x1b[31m" in result["output"]
+    assert "Red" in result["output"]
 
 
 def test_output_clip_preserves_ansi_codes():
@@ -103,10 +104,10 @@ def test_output_clip_preserves_ansi_codes():
     output.write(0, 0, red_text, transformers=[])
     output.unclip()
     result = output.get()
-    
+
     # ANSI codes should be preserved even after clipping
-    assert '\x1b[31m' in result['output']
-    assert 'Hello' in result['output'] or 'World' in result['output']
+    assert "\x1b[31m" in result["output"]
+    assert "Hello" in result["output"] or "World" in result["output"]
 
 
 def test_output_handles_wide_characters():
@@ -115,7 +116,6 @@ def test_output_handles_wide_characters():
     text_with_cjk = "A中B"  # Chinese character is 2 columns wide
     output.write(0, 0, text_with_cjk, transformers=[])
     result = output.get()
-    
-    # Should include the Chinese character
-    assert '中' in result['output']
 
+    # Should include the Chinese character
+    assert "中" in result["output"]

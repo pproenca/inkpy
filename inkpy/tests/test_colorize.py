@@ -56,4 +56,3 @@ def test_color_reset():
     result = colorize("Hello", "red", "foreground")
     # Should end with reset code or have reset somewhere
     assert "\x1b[0m" in result or result.endswith("\x1b[0m")
-

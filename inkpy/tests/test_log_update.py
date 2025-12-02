@@ -3,7 +3,9 @@ Tests for log_update module - Terminal output management.
 
 Ported from: src/log-update.ts
 """
+
 import io
+
 from inkpy.log_update import create_log_update
 
 
@@ -76,4 +78,3 @@ def test_log_update_sync():
     log.sync("Synced content")
     output = stream.getvalue()
     assert output == ""  # Nothing written
-
