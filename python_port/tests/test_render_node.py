@@ -112,3 +112,36 @@ def test_render_multiline_text():
     assert "Line1" in result
     assert "Line2" in result
 
+
+def test_apply_padding_to_text():
+    """Test applyPaddingToText indents text correctly"""
+    from inkpy.renderer.render_node import apply_padding_to_text
+    
+    # Test with simple text
+    text = "Hello"
+    result = apply_padding_to_text(text, offset_x=4, offset_y=2)
+    
+    # Should have 2 newlines at start and 4 spaces before "Hello"
+    assert result.startswith("\n\n")
+    assert "    Hello" in result
+    
+    # Test with multiline text
+    multiline = "Line1\nLine2"
+    result = apply_padding_to_text(multiline, offset_x=2, offset_y=1)
+    
+    # Should have 1 newline at start and 2 spaces before each line
+    assert result.startswith("\n")
+    assert "  Line1" in result
+    assert "  Line2" in result
+
+
+def test_apply_padding_to_text_zero_offset():
+    """Test applyPaddingToText with zero offset"""
+    from inkpy.renderer.render_node import apply_padding_to_text
+    
+    text = "NoOffset"
+    result = apply_padding_to_text(text, offset_x=0, offset_y=0)
+    
+    # Should return text unchanged
+    assert result == "NoOffset"
+

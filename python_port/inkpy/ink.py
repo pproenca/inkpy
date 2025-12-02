@@ -11,6 +11,15 @@ from reactpy.core.layout import Layout
 from inkpy.backend.tui_backend import TUIBackend
 from inkpy.log_update import create_log_update, LogUpdate
 from inkpy.is_in_ci import is_in_ci
+from inkpy.wrap_text import wrap_text
+
+
+def erase_lines(count: int) -> str:
+    """Generate ANSI escape code to erase n lines"""
+    if count <= 0:
+        return ''
+    # Move cursor up n lines and clear each line
+    return '\x1b[1G' + '\x1b[2K\x1b[1A' * count + '\x1b[2K'
 
 
 class RenderMetrics:
@@ -282,13 +291,34 @@ class Ink:
         
         # Handle screen reader mode
         if self.is_screen_reader_enabled:
-            # TODO: Implement screen reader output handling
-            # For now, just write output
             if has_static_output:
-                self.options['stdout'].write(result['staticOutput'])
-            self.options['stdout'].write(result['output'])
+                # Erase main output before writing new static output
+                erase_code = erase_lines(self.last_output_height) if self.last_output_height > 0 else ''
+                self.options['stdout'].write(erase_code + result['staticOutput'])
+                # After erasing, the last output is gone, so reset its height
+                self.last_output_height = 0
+            
+            # Skip if output hasn't changed and no static output
+            if result['output'] == self.last_output and not has_static_output:
+                render_time = (time.perf_counter() - start_time) * 1000
+                if self.options.get('on_render'):
+                    metrics = RenderMetrics(render_time=render_time)
+                    self.options['on_render'](metrics)
+                return
+            
+            # Wrap output to terminal width for screen readers
+            terminal_width = self.get_terminal_width()
+            wrapped_output = wrap_text(result['output'], terminal_width, 'wrap')
+            
+            # Write output (erase previous if not already erased for static output)
+            if has_static_output:
+                self.options['stdout'].write(wrapped_output)
+            else:
+                erase_code = erase_lines(self.last_output_height) if self.last_output_height > 0 else ''
+                self.options['stdout'].write(erase_code + wrapped_output)
+            
             self.last_output = result['output']
-            self.last_output_height = result['outputHeight']
+            self.last_output_height = len(wrapped_output.split('\n')) if wrapped_output else 0
             
             render_time = (time.perf_counter() - start_time) * 1000
             if self.options.get('on_render'):

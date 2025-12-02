@@ -48,8 +48,15 @@ def Box(
     if is_screen_reader_enabled and aria_hidden:
         return None
     
-    if children is None:
-        children = []
+    # Determine effective children based on screen reader mode
+    # When screen reader is enabled and aria_label is set, use aria_label as content
+    if is_screen_reader_enabled and aria_label:
+        effective_children = aria_label
+    elif children is None:
+        effective_children = []
+    else:
+        effective_children = children
+    
     if style is None:
         style = {}
     
@@ -103,12 +110,12 @@ def Box(
     # Create box element
     # Children must be passed as positional args, not in attributes dict
     # Otherwise ReactPy stringifies component objects instead of rendering them
-    if children is None:
+    if effective_children is None or effective_children == []:
         box_element = html.div(attributes)
-    elif isinstance(children, (list, tuple)):
-        box_element = html.div(attributes, *children)
+    elif isinstance(effective_children, (list, tuple)):
+        box_element = html.div(attributes, *effective_children)
     else:
-        box_element = html.div(attributes, children)
+        box_element = html.div(attributes, effective_children)
     
     # If backgroundColor is set, wrap with BackgroundContext Provider
     if backgroundColor:

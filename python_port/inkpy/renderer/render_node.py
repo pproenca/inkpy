@@ -16,6 +16,59 @@ from ..wrap_text import wrap_text
 OutputTransformer = Callable[[str, int], str]
 
 
+def indent_string(text: str, indent: int) -> str:
+    """
+    Add indentation to each line of text.
+    
+    Equivalent to the indent-string npm package.
+    
+    Args:
+        text: Text to indent
+        indent: Number of spaces to add at the start of each line
+        
+    Returns:
+        Indented text
+    """
+    if indent <= 0:
+        return text
+    
+    spaces = ' ' * int(indent)
+    lines = text.split('\n')
+    return '\n'.join(spaces + line for line in lines)
+
+
+def apply_padding_to_text(text: str, offset_x: int = 0, offset_y: int = 0) -> str:
+    """
+    Apply padding (newlines and indentation) to text.
+    
+    Equivalent to applyPaddingToText in Ink's render-node-to-output.ts
+    
+    Args:
+        text: Text to pad
+        offset_x: Number of spaces to add at start of each line
+        offset_y: Number of newlines to add before text
+        
+    Returns:
+        Padded text
+    """
+    result = text
+    
+    if offset_y > 0:
+        result = '\n' * offset_y + result
+    
+    if offset_x > 0:
+        # Only indent the text part (after any leading newlines)
+        if offset_y > 0:
+            # Split into leading newlines and text
+            prefix = '\n' * offset_y
+            text_part = result[offset_y:]  # Everything after the leading newlines
+            result = prefix + indent_string(text_part, offset_x)
+        else:
+            result = indent_string(result, offset_x)
+    
+    return result
+
+
 def render_dom_node_to_output(
     node: DOMElement,
     output: Output,

@@ -87,6 +87,21 @@ def test_flex_basis_percent():
     assert layout is not None
 
 
+def test_flex_basis_auto():
+    """Test flexBasis as 'auto' or undefined"""
+    # Test with None (undefined/auto)
+    node = YogaNode()
+    apply_styles(node, {'flexBasis': None})
+    layout = node.view.poga_layout()
+    assert layout is not None
+    
+    # Test with 'auto' string
+    node2 = YogaNode()
+    apply_styles(node2, {'flexBasis': 'auto'})
+    layout2 = node2.view.poga_layout()
+    assert layout2 is not None
+
+
 def test_justify_content_space_evenly():
     """Test space-evenly justification"""
     node = YogaNode()

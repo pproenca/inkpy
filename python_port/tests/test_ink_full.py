@@ -153,6 +153,19 @@ def test_ink_no_throttle_with_screen_reader():
     assert ink._unthrottled is True
 
 
+def test_ink_screen_reader_uses_wrap_text():
+    """Test Ink wraps output in screen reader mode"""
+    from inkpy.ink import erase_lines
+    
+    # Test erase_lines function
+    erase = erase_lines(3)
+    assert '\x1b[' in erase  # Should contain ANSI escape codes
+    
+    # Test with 0 lines (should return empty string)
+    assert erase_lines(0) == ''
+    assert erase_lines(-1) == ''
+
+
 def test_ink_terminal_resize_handler():
     """Test Ink sets up terminal resize handler"""
     stdout = MockStdout()

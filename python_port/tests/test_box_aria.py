@@ -141,6 +141,75 @@ async def test_box_aria_label_rendered_in_screen_reader_mode():
 
 
 @pytest.mark.asyncio
+async def test_box_shows_aria_label_as_children_in_screen_reader_mode():
+    """Test Box shows aria-label as children content when screen reader is enabled"""
+    from reactpy import component
+    from inkpy.components.accessibility_context import accessibility_context
+    
+    @component
+    def App():
+        return accessibility_context(
+            Box(aria_label="Screen reader text", children="Regular children"),
+            value={'is_screen_reader_enabled': True}
+        )
+    
+    vdom = await _render_component(App())
+    div = _find_div_in_vdom(vdom)
+    
+    # When screen reader is enabled, children should be the aria_label, not the original children
+    assert div is not None
+    # The children should be "Screen reader text", not "Regular children"
+    children = div.get('children', [])
+    # Children could be a string or a list containing the text
+    if isinstance(children, str):
+        assert children == "Screen reader text"
+    elif isinstance(children, list):
+        # Could be wrapped in a span/text element
+        assert len(children) > 0
+        # Find text content
+        found_label = False
+        for child in children:
+            if isinstance(child, str):
+                if child == "Screen reader text":
+                    found_label = True
+            elif isinstance(child, dict):
+                # Could be in attributes.children
+                child_content = child.get('children', '') or child.get('attributes', {}).get('children', '')
+                if child_content == "Screen reader text":
+                    found_label = True
+        assert found_label, f"Expected 'Screen reader text' in children, got: {children}"
+
+
+@pytest.mark.asyncio
+async def test_box_shows_children_when_screen_reader_disabled():
+    """Test Box shows regular children when screen reader is disabled"""
+    from reactpy import component
+    from inkpy.components.accessibility_context import accessibility_context
+    
+    @component
+    def App():
+        return accessibility_context(
+            Box(aria_label="Screen reader text", children="Regular children"),
+            value={'is_screen_reader_enabled': False}
+        )
+    
+    vdom = await _render_component(App())
+    div = _find_div_in_vdom(vdom)
+    
+    # When screen reader is disabled, children should be the original children
+    assert div is not None
+    children = div.get('children', [])
+    if isinstance(children, str):
+        assert children == "Regular children"
+    elif isinstance(children, list):
+        found = any(
+            (c == "Regular children") if isinstance(c, str) else False
+            for c in children
+        )
+        assert found or children == ["Regular children"], f"Expected 'Regular children', got: {children}"
+
+
+@pytest.mark.asyncio
 async def test_box_combines_aria_props():
     """Test Box can combine multiple ARIA props"""
     box_comp = Box(
