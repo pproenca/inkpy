@@ -14,6 +14,7 @@ from .hooks import (
 )
 from .reconciler import Reconciler
 from .component import component
+from .components import Box, Text, Newline, Spacer
 
 __all__ = [
     "FiberNode",
@@ -35,5 +36,9 @@ __all__ = [
     "ContextProvider",
     "Reconciler",
     "component",
+    "Box",
+    "Text",
+    "Newline",
+    "Spacer",
 ]
 
