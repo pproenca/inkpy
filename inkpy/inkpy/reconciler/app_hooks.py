@@ -7,6 +7,7 @@ for interactive terminal applications.
 """
 from typing import Callable, Optional, Any, Dict
 import sys
+import os
 import tty
 import termios
 import select
@@ -67,6 +68,10 @@ def _start_input_thread():
         if fd is None:
             return
         
+        # Check if stdin is a TTY - if not, input won't work
+        if not os.isatty(fd):
+            return
+        
         old_settings = None
         try:
             # Enable raw mode
@@ -76,20 +81,22 @@ def _start_input_thread():
             
             while _app_state['running']:
                 # Check if input is available (with timeout)
-                if select.select([stdin], [], [], 0.1)[0]:
-                    data = stdin.read(1)
+                # Use fd directly for select for consistency
+                if select.select([fd], [], [], 0.1)[0]:
+                    # Use os.read for unbuffered read (important in raw mode!)
+                    data = os.read(fd, 1)
                     if data:
-                        # Read any additional available bytes
-                        while select.select([stdin], [], [], 0)[0]:
-                            extra = stdin.read(1)
+                        # Read any additional available bytes (for escape sequences)
+                        while select.select([fd], [], [], 0)[0]:
+                            extra = os.read(fd, 1)
                             if extra:
                                 data += extra
                             else:
                                 break
                         
-                        # Process input
-                        _process_input(data)
-        except Exception:
+                        # Process input (decode bytes to string)
+                        _process_input(data.decode('utf-8', errors='replace'))
+        except Exception as e:
             pass
         finally:
             # Restore terminal settings
