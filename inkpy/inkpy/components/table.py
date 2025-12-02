@@ -49,6 +49,7 @@ def TableRow(
     is_header: bool = False,
     separator: str = "|",
     padding: int = 1,
+    header_style: Optional[dict[str, Any]] = None,
 ):
     """
     A row in a table.
@@ -59,6 +60,7 @@ def TableRow(
         is_header: Whether this is a header row
         separator: Column separator character
         padding: Cell padding
+        header_style: Style dict for header cells (overrides defaults)
     """
     children = []
 
@@ -68,7 +70,11 @@ def TableRow(
 
         style = {}
         if is_header:
+            # Default header style
             style["fontWeight"] = "bold"
+            # Apply custom header_style if provided
+            if header_style:
+                style.update(header_style)
 
         children.append(
             html.span(
@@ -88,6 +94,7 @@ def Table(
     show_header: bool = True,
     cell_padding: int = 1,
     min_column_width: int = 5,
+    header_style: Optional[dict[str, Any]] = None,
 ):
     """
     Table component for displaying structured data.
@@ -99,6 +106,7 @@ def Table(
         show_header: Whether to show column headers
         cell_padding: Horizontal padding in cells
         min_column_width: Minimum column width
+        header_style: Style dict for header row (e.g., {"bold": True, "color": "cyan"})
 
     Example:
         @component
@@ -112,7 +120,12 @@ def Table(
                 {"key": "age", "header": "Age"},
                 {"key": "city", "header": "City"},
             ]
-            return Table(data=data, columns=columns, border=True)
+            return Table(
+                data=data,
+                columns=columns,
+                border=True,
+                header_style={"color": "cyan"}
+            )
     """
     if data is None:
         data = []
@@ -154,6 +167,7 @@ def Table(
                 widths=widths,
                 is_header=True,
                 padding=cell_padding,
+                header_style=header_style,
             )
         )
 

@@ -113,6 +113,40 @@ class TestTableRow:
         assert element is not None
 
 
+class TestTableHeaderStyle:
+    """Test Table header_style prop"""
+
+    def test_table_with_header_style(self):
+        """Table should accept header_style prop"""
+        from inkpy.components.table import Table
+
+        data = [{"name": "Alice", "age": 30}]
+        element = Table(data=data, header_style={"color": "cyan"})
+        assert element is not None
+
+    def test_table_header_style_with_bold(self):
+        """Table should accept header_style with bold"""
+        from inkpy.components.table import Table
+
+        data = [{"name": "Alice"}]
+        element = Table(data=data, header_style={"fontWeight": "bold", "color": "blue"})
+        assert element is not None
+
+    def test_table_row_header_style(self):
+        """TableRow should accept header_style prop"""
+        from inkpy.components.table import TableRow
+
+        cells = ["A", "B"]
+        widths = [5, 5]
+        element = TableRow(
+            cells=cells,
+            widths=widths,
+            is_header=True,
+            header_style={"color": "green"},
+        )
+        assert element is not None
+
+
 class TestTableExport:
     """Test Table is exported from components module"""
 

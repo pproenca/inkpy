@@ -10,10 +10,12 @@ from .error_overview import ErrorOverview
 from .link import Link
 from .multi_select import MultiSelect
 from .newline import Newline
+from .progress_bar import ProgressBar
 from .select_input import SelectInput
 from .spacer import Spacer
-from .spinner import Spinner
+from .spinner import Spinner, SpinnerStatus
 from .static import Static
+from .streaming_text import StreamingText
 from .table import Table
 from .text import Text
 from .text_input import TextInput
@@ -27,10 +29,13 @@ __all__ = [
     "Link",
     "MultiSelect",
     "Newline",
+    "ProgressBar",
     "SelectInput",
     "Spacer",
     "Spinner",
+    "SpinnerStatus",
     "Static",
+    "StreamingText",
     "Table",
     "Text",
     "TextInput",

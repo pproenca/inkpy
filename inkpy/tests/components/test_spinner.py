@@ -87,6 +87,69 @@ class TestSpinnerTypes:
             assert config["interval"] > 0
 
 
+class TestSpinnerStatus:
+    """Test Spinner status states"""
+
+    def test_spinner_status_enum_imports(self):
+        """SpinnerStatus should be importable"""
+        from inkpy.components.spinner import SpinnerStatus
+
+        assert SpinnerStatus is not None
+        assert SpinnerStatus.SPINNING.value == "spinning"
+        assert SpinnerStatus.SUCCESS.value == "success"
+        assert SpinnerStatus.FAILURE.value == "failure"
+        assert SpinnerStatus.WARNING.value == "warning"
+        assert SpinnerStatus.INFO.value == "info"
+
+    def test_spinner_success_state(self):
+        """Spinner should display success icon when status is SUCCESS"""
+        from inkpy.components.spinner import Spinner, SpinnerStatus
+
+        element = Spinner(text="Completed", status=SpinnerStatus.SUCCESS)
+        assert element is not None
+
+    def test_spinner_failure_state(self):
+        """Spinner should display failure icon when status is FAILURE"""
+        from inkpy.components.spinner import Spinner, SpinnerStatus
+
+        element = Spinner(text="Failed", status=SpinnerStatus.FAILURE)
+        assert element is not None
+
+    def test_spinner_warning_state(self):
+        """Spinner should display warning icon when status is WARNING"""
+        from inkpy.components.spinner import Spinner, SpinnerStatus
+
+        element = Spinner(text="Warning", status=SpinnerStatus.WARNING)
+        assert element is not None
+
+    def test_spinner_info_state(self):
+        """Spinner should display info icon when status is INFO"""
+        from inkpy.components.spinner import Spinner, SpinnerStatus
+
+        element = Spinner(text="Info", status=SpinnerStatus.INFO)
+        assert element is not None
+
+    def test_spinner_custom_icons(self):
+        """Spinner should accept custom icons for status states"""
+        from inkpy.components.spinner import Spinner, SpinnerStatus
+
+        element = Spinner(
+            text="Done",
+            status=SpinnerStatus.SUCCESS,
+            success_icon="👍",
+        )
+        assert element is not None
+
+    def test_spinner_status_default_colors(self):
+        """SpinnerStatus should have default colors defined"""
+        from inkpy.components.spinner import DEFAULT_STATUS_COLORS, SpinnerStatus
+
+        assert DEFAULT_STATUS_COLORS[SpinnerStatus.SUCCESS] == "green"
+        assert DEFAULT_STATUS_COLORS[SpinnerStatus.FAILURE] == "red"
+        assert DEFAULT_STATUS_COLORS[SpinnerStatus.WARNING] == "yellow"
+        assert DEFAULT_STATUS_COLORS[SpinnerStatus.INFO] == "blue"
+
+
 class TestSpinnerExport:
     """Test Spinner is exported from components module"""
 
@@ -95,3 +158,9 @@ class TestSpinnerExport:
         from inkpy.components import Spinner
 
         assert Spinner is not None
+
+    def test_spinner_status_exported(self):
+        """SpinnerStatus should be exported from inkpy.components"""
+        from inkpy.components import SpinnerStatus
+
+        assert SpinnerStatus is not None
