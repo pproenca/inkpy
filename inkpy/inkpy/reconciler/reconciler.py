@@ -342,6 +342,46 @@ class Reconciler:
 
         if self.on_commit and self.root_dom:
             self.on_commit(self.root_dom)
+        
+        # Run effects AFTER commit (like React's useEffect)
+        self._run_effects()
+    
+    def _run_effects(self) -> None:
+        """Run all pending effects after commit phase."""
+        if self.current_root and self.current_root.child:
+            self._run_fiber_effects(self.current_root.child)
+    
+    def _run_fiber_effects(self, fiber: FiberNode) -> None:
+        """Recursively run effects for a fiber and its children."""
+        if not fiber:
+            return
+        
+        # Run effects for function components
+        if fiber.tag == FiberTag.FUNCTION_COMPONENT:
+            for hook in fiber.hooks:
+                # Check if it's an effect hook with a callback
+                if hasattr(hook, 'callback') and callable(hook.callback):
+                    # Check if this effect needs to run
+                    # (for now, run all effects on first render)
+                    if not hasattr(hook, '_has_run'):
+                        # Run cleanup from previous render if exists
+                        if hasattr(hook, 'cleanup') and callable(hook.cleanup):
+                            try:
+                                hook.cleanup()
+                            except Exception:
+                                pass
+                        
+                        # Run the effect and store cleanup
+                        try:
+                            cleanup = hook.callback()
+                            hook.cleanup = cleanup if callable(cleanup) else None
+                            hook._has_run = True
+                        except Exception:
+                            pass
+        
+        # Recurse to children and siblings
+        self._run_fiber_effects(fiber.child)
+        self._run_fiber_effects(fiber.sibling)
 
     def _commit_work(self, fiber: FiberNode) -> None:
         """Commit a fiber's changes to DOM"""
