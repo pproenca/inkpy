@@ -7,6 +7,7 @@ from .use_is_screen_reader_enabled import use_is_screen_reader_enabled
 from .use_stderr import use_stderr
 from .use_stdin import use_stdin
 from .use_stdout import use_stdout
+from .use_terminal_dimensions import use_terminal_dimensions
 
 __all__ = [
     "use_app",
@@ -17,4 +18,5 @@ __all__ = [
     "use_stderr",
     "use_stdin",
     "use_stdout",
+    "use_terminal_dimensions",
 ]
