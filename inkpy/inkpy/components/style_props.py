@@ -36,6 +36,19 @@ STYLE_PROP_MAP = {
     'text_wrap': 'textWrap',
 }
 
+# Single-word style props that don't need conversion but should be treated as styles
+SINGLE_WORD_STYLE_PROPS = {
+    'padding',
+    'margin',
+    'width',
+    'height',
+    'flex',
+    'gap',
+    'overflow',
+    'display',
+    'position',
+}
+
 
 def normalize_style_props(kwargs: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """
@@ -58,7 +71,10 @@ def normalize_style_props(kwargs: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[
             camel_key = STYLE_PROP_MAP[key]
             style_props[camel_key] = value
         elif key in STYLE_PROP_MAP.values():
-            # Already camelCase, pass through
+            # Already camelCase, pass through as style
+            style_props[key] = value
+        elif key in SINGLE_WORD_STYLE_PROPS:
+            # Single-word style props, pass through as style
             style_props[key] = value
         else:
             # Not a style prop

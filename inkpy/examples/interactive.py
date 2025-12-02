@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
 Interactive Example - Demonstrates keyboard navigation and focus
+
+Uses Pythonic snake_case API:
+- Key properties: key.up_arrow, key.down_arrow, key.return_key
+- Style props: flex_direction, border_style, padding
 """
 from reactpy import component, use_state
 from inkpy import render

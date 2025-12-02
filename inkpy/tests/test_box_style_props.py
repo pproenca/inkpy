@@ -183,3 +183,19 @@ async def test_box_snake_case_overrides_style_dict():
     style = div.get('attributes', {}).get('style', {})
     assert style.get('flexDirection') == "column"
 
+
+@pytest.mark.asyncio
+async def test_box_single_word_style_props():
+    """Test Box handles single-word style props like padding, margin, width"""
+    box_comp = Box(padding=1, margin=2, width=100, height=50, gap=1)
+    vdom = await _render_component(box_comp)
+    
+    div = _find_div_in_vdom(vdom)
+    assert div is not None
+    style = div.get('attributes', {}).get('style', {})
+    assert style.get('padding') == 1
+    assert style.get('margin') == 2
+    assert style.get('width') == 100
+    assert style.get('height') == 50
+    assert style.get('gap') == 1
+
