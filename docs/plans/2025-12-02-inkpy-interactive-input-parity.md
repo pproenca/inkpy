@@ -86,10 +86,10 @@ Additionally, style props use snake_case (`flex_direction`) but the style system
 def test_key_snake_case_properties():
     """Test Key class has both camelCase and snake_case properties"""
     key = parse_keypress('\x1b[A')  # Up arrow
-    
+
     # CamelCase (existing)
     assert key.upArrow is True
-    
+
     # Snake_case (NEW)
     assert key.up_arrow is True
     assert key.down_arrow is False
@@ -105,7 +105,7 @@ def test_key_return_alias():
 def test_key_all_snake_case_aliases():
     """Test all snake_case aliases exist"""
     key = parse_keypress('a')
-    
+
     # All arrow properties should exist in snake_case
     assert hasattr(key, 'up_arrow')
     assert hasattr(key, 'down_arrow')
@@ -138,49 +138,49 @@ class Key:
     sequence: str = ''
     raw: Optional[str] = None
     code: Optional[str] = None
-    
+
     # === CamelCase properties (Ink parity) ===
     @property
     def upArrow(self) -> bool:
         return self.name == 'up'
-    
+
     @property
     def downArrow(self) -> bool:
         return self.name == 'down'
-    
+
     # ... existing properties ...
-    
+
     # === Snake_case aliases (Pythonic API) ===
     @property
     def up_arrow(self) -> bool:
         """Snake_case alias for upArrow"""
         return self.upArrow
-    
+
     @property
     def down_arrow(self) -> bool:
         """Snake_case alias for downArrow"""
         return self.downArrow
-    
+
     @property
     def left_arrow(self) -> bool:
         """Snake_case alias for leftArrow"""
         return self.leftArrow
-    
+
     @property
     def right_arrow(self) -> bool:
         """Snake_case alias for rightArrow"""
         return self.rightArrow
-    
+
     @property
     def page_up(self) -> bool:
         """Snake_case alias for pageUp"""
         return self.pageUp
-    
+
     @property
     def page_down(self) -> bool:
         """Snake_case alias for pageDown"""
         return self.pageDown
-    
+
     @property
     def return_key(self) -> bool:
         """Alias for return_ (more readable)"""
@@ -217,7 +217,7 @@ git commit -m "feat(input): add snake_case property aliases to Key class"
 def test_box_accepts_snake_case_style_props():
     """Test Box converts snake_case props to camelCase"""
     from inkpy.components.box import Box
-    
+
     # Create Box with snake_case props
     @component
     def TestBox():
@@ -228,7 +228,7 @@ def test_box_accepts_snake_case_style_props():
             border_style="single",
             background_color="blue",
         )
-    
+
     # Render and verify style is correctly converted
     # ... test rendering ...
 
@@ -304,11 +304,11 @@ def Box(
 ):
     # Normalize style prop names
     normalized_kwargs = _normalize_style_props(kwargs)
-    
+
     # Handle snake_case aliases for explicit props
     final_bg = backgroundColor or background_color
     final_border = borderStyle or border_style
-    
+
     # ... rest of implementation
 ```
 
@@ -484,4 +484,3 @@ To execute this plan:
 3. Continue with Tasks 2-4 for complete fix
 
 Use: `@.cursor/rules/execution-workflow.mdc` to begin implementation.
-

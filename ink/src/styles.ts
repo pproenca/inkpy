@@ -187,28 +187,28 @@ export type Styles = {
 
 	/**
 	Determines whether top border is visible.
-	
+
 	@default true
 	*/
 	readonly borderTop?: boolean;
 
 	/**
 	Determines whether bottom border is visible.
-	
+
 	@default true
 	*/
 	readonly borderBottom?: boolean;
 
 	/**
 	Determines whether left border is visible.
-	
+
 	@default true
 	*/
 	readonly borderLeft?: boolean;
 
 	/**
 	Determines whether right border is visible.
-	
+
 	@default true
 	*/
 	readonly borderRight?: boolean;
@@ -247,35 +247,35 @@ export type Styles = {
 
 	/**
 	Dim the top border color.
-	
+
 	@default false
 	*/
 	readonly borderTopDimColor?: boolean;
 
 	/**
 	Dim the bottom border color.
-	
+
 	@default false
 	*/
 	readonly borderBottomDimColor?: boolean;
 
 	/**
 	Dim the left border color.
-	
+
 	@default false
 	*/
 	readonly borderLeftDimColor?: boolean;
 
 	/**
 	Dim the right border color.
-	
+
 	@default false
 	*/
 	readonly borderRightDimColor?: boolean;
 
 	/**
 	Behavior for an element's overflow in both directions.
-	
+
 	@default 'visible'
 	*/
 	readonly overflow?: 'visible' | 'hidden';
@@ -296,7 +296,7 @@ export type Styles = {
 
 	/**
 	Background color for the element.
-	
+
 	Accepts the same values as `color` in the `<Text>` component.
 	*/
 	readonly backgroundColor?: LiteralUnion<ForegroundColorName, string>;

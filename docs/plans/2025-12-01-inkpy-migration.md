@@ -241,11 +241,11 @@ def test_render_text_node():
     text = create_dom_node('ink-text')
     text.children = [create_text_node("Hello")]
     root.children = [text]
-    
+
     calculate_layout(root, width=80)
     output = Output(width=80, height=24)
     render_node_to_output(root, output)
-    
+
     assert "Hello" in output.get()['output']
 
 def test_render_box_with_padding():
@@ -307,14 +307,14 @@ def test_parse_enter():
 def test_use_input_arrow_keys():
     """Test that arrow key presses are correctly detected"""
     captured_keys = []
-    
+
     @component
     def App():
         def handler(input_str, key):
             captured_keys.append(key)
         use_input(handler)
         return Text("Press a key")
-    
+
     # Simulate keypress
     # Verify handler was called with correct key info
 ```
@@ -430,7 +430,7 @@ def test_box_flex_props():
 ```python
 def test_static_renders_once():
     """Static content should render once and stay above dynamic content"""
-    
+
 def test_static_items():
     items = ["Item 1", "Item 2", "Item 3"]
     s = Static(items=items, children=lambda item: Text(item))
@@ -581,7 +581,7 @@ def test_ink_render():
     @component
     def App():
         return Text("Hello, World!")
-    
+
     ink = Ink(stdout=MockStdout())
     ink.render(App())
     # Verify output was written
@@ -616,7 +616,7 @@ def test_render():
     @component
     def App():
         return Text("Hello!")
-    
+
     instance = render(App())
     assert hasattr(instance, 'rerender')
     assert hasattr(instance, 'unmount')
@@ -686,13 +686,13 @@ from inkpy.hooks import use_state, use_effect
 @component
 def Counter():
     count, set_count = use_state(0)
-    
+
     @use_effect(deps=[])
     async def timer():
         while True:
             await asyncio.sleep(1)
             set_count(lambda c: c + 1)
-    
+
     return Box(
         Text(f"Count: {count}"),
         borderStyle="round"
@@ -719,7 +719,7 @@ if __name__ == "__main__":
 def SelectList():
     items = ["Option 1", "Option 2", "Option 3"]
     selected, set_selected = use_state(0)
-    
+
     def handle_input(input_str, key):
         if key.upArrow:
             set_selected(lambda s: max(0, s - 1))
@@ -727,11 +727,11 @@ def SelectList():
             set_selected(lambda s: min(len(items) - 1, s + 1))
         elif key.return_:
             exit()
-    
+
     use_input(handle_input)
-    
+
     return Box(
-        [Text(f"{'>' if i == selected else ' '} {item}") 
+        [Text(f"{'>' if i == selected else ' '} {item}")
          for i, item in enumerate(items)],
         flexDirection="column"
     )
@@ -961,4 +961,3 @@ ReactPy's VDOM structure may differ from React. Need to verify:
 Ready to begin execution? Start with **Task 3.1: Output Buffer Class**.
 
 Trigger: `execution-workflow.mdc`
-

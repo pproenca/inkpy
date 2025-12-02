@@ -584,4 +584,3 @@ All functionality is fully implemented:
 | `measure-element.ts` | `measure_element.py` | ✅ |
 
 **Total: 42 ink files → 35 inkpy files (some consolidated)**
-

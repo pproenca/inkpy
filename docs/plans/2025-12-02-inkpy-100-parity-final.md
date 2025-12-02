@@ -46,34 +46,34 @@ from inkpy.ink import throttle
 def test_throttle_limits_calls():
     """Throttle should limit function calls to max once per interval."""
     call_count = 0
-    
+
     def increment():
         nonlocal call_count
         call_count += 1
-    
+
     # Throttle to 100ms (10 FPS)
     throttled = throttle(increment, 100, leading=True, trailing=True)
-    
+
     # Call rapidly 10 times
     for _ in range(10):
         throttled()
         time.sleep(0.01)  # 10ms between calls
-    
+
     # Should have at most 2 calls (leading + trailing), not 10
     assert call_count <= 3
 
 def test_throttle_leading_call():
     """Throttle with leading=True should call immediately on first call."""
     call_times = []
-    
+
     def record_time():
         call_times.append(time.time())
-    
+
     throttled = throttle(record_time, 100, leading=True, trailing=False)
-    
+
     start = time.time()
     throttled()
-    
+
     # First call should happen immediately
     assert len(call_times) == 1
     assert call_times[0] - start < 0.01  # Within 10ms
@@ -81,21 +81,21 @@ def test_throttle_leading_call():
 def test_throttle_trailing_call():
     """Throttle with trailing=True should call after interval ends."""
     call_count = 0
-    
+
     def increment():
         nonlocal call_count
         call_count += 1
-    
+
     throttled = throttle(increment, 50, leading=True, trailing=True)
-    
+
     # Rapid calls
     throttled()  # Leading call (1)
     throttled()
     throttled()
-    
+
     # Wait for trailing call
     time.sleep(0.1)
-    
+
     # Should have exactly 2 calls: leading + trailing
     assert call_count == 2
 ```
@@ -124,15 +124,15 @@ def throttle(
 ) -> Callable:
     """
     Throttle function calls to at most once per wait_ms milliseconds.
-    
+
     Equivalent to es-toolkit/compat throttle.
-    
+
     Args:
         func: Function to throttle
         wait_ms: Minimum time between calls in milliseconds
         leading: Call on leading edge (first call)
         trailing: Call on trailing edge (after wait)
-    
+
     Returns:
         Throttled function
     """
@@ -140,15 +140,15 @@ def throttle(
     pending_call = False
     timer: Optional[threading.Timer] = None
     lock = threading.Lock()
-    
+
     def throttled(*args, **kwargs):
         nonlocal last_call_time, pending_call, timer
-        
+
         now = time.time() * 1000  # Convert to ms
-        
+
         with lock:
             time_since_last = now - last_call_time
-            
+
             if time_since_last >= wait_ms:
                 # Enough time has passed - call immediately if leading
                 if leading:
@@ -159,13 +159,13 @@ def throttle(
             else:
                 # Within throttle window - schedule trailing call
                 pending_call = True
-            
+
             # Schedule trailing call if not already scheduled
             if trailing and pending_call and timer is None:
                 remaining = wait_ms - time_since_last
                 if remaining < 0:
                     remaining = wait_ms
-                
+
                 def trailing_call():
                     nonlocal pending_call, timer, last_call_time
                     with lock:
@@ -174,11 +174,11 @@ def throttle(
                             pending_call = False
                             func(*args, **kwargs)
                         timer = None
-                
+
                 timer = threading.Timer(remaining / 1000, trailing_call)
                 timer.daemon = True
                 timer.start()
-    
+
     return throttled
 ```
 
@@ -243,19 +243,19 @@ def test_screen_reader_skips_display_none():
     """Screen reader should skip nodes with display: none."""
     root = create_node('ink-root')
     root.style = {'flexDirection': 'column'}
-    
+
     visible_box = create_node('ink-box')
     visible_text = create_node('ink-text')
     # Note: Add text content through child nodes
-    
+
     hidden_box = create_node('ink-box')
     hidden_box.style = {'display': 'none'}
-    
+
     # Build tree structure
     # ... (depends on DOM API)
-    
+
     output = render_node_to_screen_reader_output(root)
-    
+
     # Hidden content should not appear
     assert 'hidden' not in output.lower()
 ```
@@ -273,11 +273,11 @@ def render_node_to_screen_reader_output(
     # Skip static elements if requested
     if skip_static and node.internal_static:
         return ''
-    
+
     # Skip nodes with display: none
     if node.style.get('display') == 'none':
         return ''
-    
+
     # ... rest of function
 ```
 
@@ -317,7 +317,7 @@ def test_measure_text_with_ansi_codes():
     # Text with ANSI color codes
     text = "\x1b[31mred\x1b[0m"
     result = measure_text(text)
-    
+
     # Should measure visible width (3 chars), not ANSI codes
     assert result['width'] == 3
     assert result['height'] == 1
@@ -326,7 +326,7 @@ def test_measure_text_cjk_characters():
     """Measure text should count CJK characters as double width."""
     text = "hello世界"  # 5 + 2*2 = 9 display width
     result = measure_text(text)
-    
+
     # CJK characters are double-width
     assert result['width'] == 9
 
@@ -334,7 +334,7 @@ def test_measure_text_emoji():
     """Measure text should handle emoji width correctly."""
     text = "hi👋there"  # 2 + 2 + 5 = 9 (emoji is typically 2 wide)
     result = measure_text(text)
-    
+
     # Emoji is typically double-width
     assert result['width'] >= 9
 
@@ -342,7 +342,7 @@ def test_measure_multiline_widest():
     """Measure text should return widest line width."""
     text = "short\nlonger line\nmed"
     result = measure_text(text)
-    
+
     assert result['width'] == 11  # "longer line" length
     assert result['height'] == 3
 ```
@@ -364,39 +364,39 @@ _cache: Dict[str, Dict[str, int]] = {}
 def measure_text(text: str) -> Dict[str, int]:
     """
     Measure text dimensions (width and height).
-    
+
     Uses ANSI-aware width calculation that handles:
     - ANSI escape codes (ignored in width calculation)
     - CJK characters (double-width)
     - Emoji (variable width)
-    
+
     Args:
         text: Text to measure
-        
+
     Returns:
         Dictionary with 'width' and 'height' keys
     """
     if len(text) == 0:
         return {'width': 0, 'height': 0}
-    
+
     # Check cache
     cached = _cache.get(text)
     if cached:
         return cached
-    
+
     # Calculate width (widest line) using ANSI-aware width
     lines = text.split('\n')
     width = 0
     for line in lines:
         line_width = string_width(line)
         width = max(width, line_width)
-    
+
     # Height is number of lines
     height = len(lines)
-    
+
     dimensions = {'width': width, 'height': height}
     _cache[text] = dimensions
-    
+
     return dimensions
 ```
 
@@ -549,4 +549,3 @@ Python equivalent:
 ```python
 throttle(self.log, wait_ms=33, leading=True, trailing=True)  # ~30 FPS
 ```
-
