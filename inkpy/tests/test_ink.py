@@ -63,6 +63,7 @@ def test_ink_render():
     )
 
     ink.render(App())
+    ink.render_sync()  # Need to call render_sync() for immediate output
 
     # In debug mode, output should be written directly
     output = stdout.getvalue()

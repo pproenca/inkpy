@@ -4,6 +4,7 @@ Log Update - Terminal output management with cursor control and incremental rend
 Ported from: src/log-update.ts
 """
 
+import threading
 from typing import TextIO
 
 # ANSI escape sequences
@@ -108,6 +109,7 @@ class LogUpdate:
         self._previous_output = ""
         self._previous_lines: list[str] = []
         self._has_hidden_cursor = False
+        self._lock = threading.Lock()
 
     def __call__(self, text: str) -> None:
         """Write output, erasing previous content"""
@@ -118,93 +120,98 @@ class LogUpdate:
 
     def _render_standard(self, text: str) -> None:
         """Standard rendering mode - erase all previous lines"""
-        if not self.show_cursor and not self._has_hidden_cursor:
-            self.stream.write(HIDE_CURSOR)
-            self._has_hidden_cursor = True
+        with self._lock:
+            if not self.show_cursor and not self._has_hidden_cursor:
+                self.stream.write(HIDE_CURSOR)
+                self._has_hidden_cursor = True
 
-        output = text + "\n"
-        if output == self._previous_output:
-            return
+            output = text + "\n"
+            if output == self._previous_output:
+                return
 
-        self._previous_output = output
-        self.stream.write(erase_lines(self._previous_line_count) + output)
-        # After writing output ending with \n, cursor is on the NEXT line
-        # So _previous_line_count includes that line (to be erased on next render)
-        self._previous_line_count = len(output.split("\n"))
-        self.stream.flush()
+            self._previous_output = output
+            self.stream.write(erase_lines(self._previous_line_count) + output)
+            # After writing output ending with \n, cursor is on the NEXT line
+            # So _previous_line_count includes that line (to be erased on next render)
+            self._previous_line_count = len(output.split("\n"))
+            self.stream.flush()
 
     def _render_incremental(self, text: str) -> None:
         """Incremental rendering mode - only update changed lines"""
-        if not self.show_cursor and not self._has_hidden_cursor:
-            self.stream.write(HIDE_CURSOR)
-            self._has_hidden_cursor = True
+        with self._lock:
+            if not self.show_cursor and not self._has_hidden_cursor:
+                self.stream.write(HIDE_CURSOR)
+                self._has_hidden_cursor = True
 
-        output = text + "\n"
-        if output == self._previous_output:
-            return
+            output = text + "\n"
+            if output == self._previous_output:
+                return
 
-        previous_count = len(self._previous_lines)
-        next_lines = output.split("\n")
-        next_count = len(next_lines)
-        visible_count = next_count - 1  # Exclude trailing empty line
+            previous_count = len(self._previous_lines)
+            next_lines = output.split("\n")
+            next_count = len(next_lines)
+            visible_count = next_count - 1  # Exclude trailing empty line
 
-        if output == "\n" or len(self._previous_output) == 0:
-            self.stream.write(erase_lines(previous_count) + output)
+            if output == "\n" or len(self._previous_output) == 0:
+                self.stream.write(erase_lines(previous_count) + output)
+                self._previous_output = output
+                self._previous_lines = next_lines
+                self.stream.flush()
+                return
+
+            buffer = []
+
+            # Handle line count changes
+            if next_count < previous_count:
+                # Clear extra lines
+                buffer.append(erase_lines(previous_count - next_count + 1))
+                buffer.append(cursor_up(visible_count))
+            else:
+                buffer.append(cursor_up(previous_count - 1))
+
+            # Only write changed lines
+            for i in range(visible_count):
+                if i < len(self._previous_lines) and next_lines[i] == self._previous_lines[i]:
+                    # Skip unchanged lines
+                    buffer.append(CURSOR_NEXT_LINE)
+                    continue
+                # Erase and write changed line
+                buffer.append(ERASE_LINE + next_lines[i] + "\n")
+
+            self.stream.write("".join(buffer))
             self._previous_output = output
             self._previous_lines = next_lines
             self.stream.flush()
-            return
-
-        buffer = []
-
-        # Handle line count changes
-        if next_count < previous_count:
-            # Clear extra lines
-            buffer.append(erase_lines(previous_count - next_count + 1))
-            buffer.append(cursor_up(visible_count))
-        else:
-            buffer.append(cursor_up(previous_count - 1))
-
-        # Only write changed lines
-        for i in range(visible_count):
-            if i < len(self._previous_lines) and next_lines[i] == self._previous_lines[i]:
-                # Skip unchanged lines
-                buffer.append(CURSOR_NEXT_LINE)
-                continue
-            # Erase and write changed line
-            buffer.append(ERASE_LINE + next_lines[i] + "\n")
-
-        self.stream.write("".join(buffer))
-        self._previous_output = output
-        self._previous_lines = next_lines
-        self.stream.flush()
 
     def clear(self) -> None:
         """Erase all output"""
-        self.stream.write(erase_lines(self._previous_line_count))
-        self._previous_output = ""
-        self._previous_line_count = 0
-        self._previous_lines = []
-        self.stream.flush()
+        with self._lock:
+            self.stream.write(erase_lines(self._previous_line_count))
+            self._previous_output = ""
+            self._previous_line_count = 0
+            self._previous_lines = []
+            self.stream.flush()
 
     def done(self) -> None:
         """Cleanup - reset state and show cursor"""
-        self._previous_output = ""
-        self._previous_line_count = 0
-        self._previous_lines = []
+        with self._lock:
+            self._previous_output = ""
+            self._previous_line_count = 0
+            self._previous_lines = []
 
-        if not self.show_cursor and self._has_hidden_cursor:
-            self.stream.write(SHOW_CURSOR)
-            self._has_hidden_cursor = False
-            self.stream.flush()
+            if not self.show_cursor and self._has_hidden_cursor:
+                self.stream.write(SHOW_CURSOR)
+                self._has_hidden_cursor = False
+                self.stream.flush()
 
     def sync(self, text: str) -> None:
         """Update internal state without writing to stream"""
-        output = text + "\n"
-        self._previous_output = output
-        # After writing output ending with \n, cursor is on the NEXT line
-        self._previous_line_count = len(output.split("\n"))
-        self._previous_lines = output.split("\n")
+        with self._lock:
+            output = text + "\n"
+            self._previous_output = output
+            # After writing output ending with \n, cursor is on the NEXT line
+            self._previous_line_count = len(output.split("\n"))
+            self._previous_lines = output.split("\n")
 
 
 def create_log_update(

@@ -50,7 +50,7 @@ def WelcomeScreen(on_continue):
             Text("  Version 0.1.0 (InkPy Demo)", color="gray"),
             Text(""),
             Text("  Welcome! This demo showcases InkPy capabilities.", color="white"),
-            Text("  Type /help for available commands.", color="cyan"),
+            Text("  You'll be able to type commands like /help.", color="cyan"),
             Text(""),
             Text("  Press Enter to continue...", color="gray"),
             Text(""),
@@ -293,7 +293,7 @@ def InputDemo(on_back):
                 Text(""),
                 Text(f"Hello, {name}!", color="green"),
                 Text("Would you like to continue?", color="white"),
-                ConfirmInput(on_submit=handle_confirm),
+                ConfirmInput(on_confirm=handle_confirm),
             ],
             flex_direction="column",
             padding=1,
@@ -317,13 +317,112 @@ def InputDemo(on_back):
 
 
 @component
+def HelpScreen(on_back):
+    """Shows available commands."""
+
+    def handle_input(input_str, key):
+        if key.return_key:
+            on_back()
+
+    use_input(handle_input)
+
+    return Box(
+        [
+            Text("Available Commands", color="cyan", bold=True),
+            Text(""),
+            Text("  /help      - Show this help screen", color="white"),
+            Text("  /menu      - Go to demo menu", color="white"),
+            Text("  /demos     - Go to demo menu", color="white"),
+            Text("  /spinner   - Run spinner demo", color="white"),
+            Text("  /streaming - Run streaming text demo", color="white"),
+            Text("  /progress  - Run progress bar demo", color="white"),
+            Text("  /table     - Run table demo", color="white"),
+            Text("  /input     - Run input demo", color="white"),
+            Text("  /exit      - Exit the application", color="white"),
+            Text("  /quit      - Exit the application", color="white"),
+            Text(""),
+            Text("Press Enter to go back...", color="gray"),
+        ],
+        flex_direction="column",
+        padding=1,
+    )
+
+
+@component
+def CommandPrompt(on_command):
+    """Command prompt for typing commands like /help."""
+    command, set_command = use_state("")
+    error_msg, set_error_msg = use_state("")
+
+    def handle_submit(value):
+        cmd = value.strip().lower()
+
+        # Command mapping
+        commands = {
+            "/help": "help",
+            "/menu": "menu",
+            "/demos": "menu",
+            "/spinner": "spinner",
+            "/streaming": "streaming",
+            "/progress": "progress",
+            "/table": "table",
+            "/input": "input",
+            "/exit": "exit",
+            "/quit": "exit",
+        }
+
+        if cmd in commands:
+            set_error_msg("")
+            set_command("")
+            on_command(commands[cmd])
+        elif cmd == "":
+            # Empty command, show menu
+            on_command("menu")
+        else:
+            set_error_msg(f"Unknown command: {cmd}")
+            set_command("")
+
+    return Box(
+        [
+            Text("Claude Code CLI Demo", color="blue", bold=True),
+            Text(""),
+            Text("Type a command (e.g., /help) or press Enter for menu:", color="white"),
+            Text(""),
+            Box(
+                [
+                    Text("> ", color="cyan"),
+                    TextInput(
+                        value=command,
+                        on_change=set_command,
+                        on_submit=handle_submit,
+                        placeholder="Enter command...",
+                    ),
+                ],
+                flex_direction="row",
+            ),
+            Text(""),
+            Text(error_msg, color="red") if error_msg else Text(""),
+        ],
+        flex_direction="column",
+        padding=1,
+    )
+
+
+@component
 def App():
     """Main application component."""
     screen, set_screen = use_state("welcome")
     app = use_app()
 
     def handle_welcome_continue():
-        set_screen("menu")
+        set_screen("prompt")
+
+    def handle_command(cmd):
+        """Handle commands from the command prompt."""
+        if cmd == "exit":
+            app.exit()
+        else:
+            set_screen(cmd)
 
     def handle_menu_select(value):
         if value == "exit":
@@ -332,10 +431,14 @@ def App():
             set_screen(value)
 
     def handle_back():
-        set_screen("menu")
+        set_screen("prompt")
 
     if screen == "welcome":
         return WelcomeScreen(on_continue=handle_welcome_continue)
+    elif screen == "prompt":
+        return CommandPrompt(on_command=handle_command)
+    elif screen == "help":
+        return HelpScreen(on_back=handle_back)
     elif screen == "menu":
         return MainMenu(on_select=handle_menu_select)
     elif screen == "spinner":
@@ -354,10 +457,8 @@ def App():
 
 def main():
     """Entry point for the demo application."""
-    print("\033[2J\033[H")  # Clear screen
-    print("Starting Claude Code Demo...")
-    print("Press Ctrl+C to exit at any time.\n")
-
+    # Don't print before render - it interferes with LogUpdate's line tracking
+    # The welcome screen will serve as the initial display
     instance = render(App())
     try:
         import asyncio

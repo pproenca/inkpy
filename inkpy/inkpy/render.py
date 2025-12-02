@@ -19,6 +19,14 @@ class Instance:
         """Re-render with a new component tree"""
         self._ink.render(node)
 
+    def render_sync(self):
+        """Render immediately without waiting for wait_until_exit().
+
+        This is useful for tests that need immediate output.
+        Note: Effects will NOT persist - for persistent effects, use wait_until_exit().
+        """
+        self._ink.render_sync()
+
     def unmount(self, error: Optional[Exception] = None):
         """Unmount the application"""
         self._ink.unmount(error)
@@ -50,12 +58,15 @@ def render(
     """
     Mount a component and render the output.
 
+    For interactive apps, call wait_until_exit() after render() to run the
+    main loop. For immediate output (tests), call render_sync() on the instance.
+
     Args:
         node: ReactPy component to render
         stdout: Output stream (default: sys.stdout)
         stdin: Input stream (default: sys.stdin)
         stderr: Error stream (default: sys.stderr)
-        debug: Enable debug mode
+        debug: Enable debug mode (calls render_sync() automatically)
         exit_on_ctrl_c: Exit on Ctrl+C
         patch_console: Patch console methods
         max_fps: Maximum frames per second
@@ -79,7 +90,13 @@ def render(
     ink = get_instance(options["stdout"], lambda: Ink(**options))
     ink.render(node)
 
-    return Instance(ink)
+    instance = Instance(ink)
+
+    # In debug mode, render immediately for backward compatibility with tests
+    if debug:
+        instance.render_sync()
+
+    return instance
 
 
 def get_instance(stdout: TextIO, factory: Callable[[], Ink]) -> Ink:

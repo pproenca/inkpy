@@ -43,21 +43,28 @@ def throttle(
     """
     last_call_time = 0.0
     pending_call = False
+    pending_args: Optional[tuple] = None
+    pending_kwargs: Optional[dict] = None
     timer: Optional[threading.Timer] = None
     lock = threading.Lock()
 
     def throttled(*args, **kwargs):
-        nonlocal last_call_time, pending_call, timer
+        nonlocal last_call_time, pending_call, pending_args, pending_kwargs, timer
 
         now = time.time() * 1000  # Convert to ms
 
         with lock:
             time_since_last = now - last_call_time
 
+            # Always update pending args to latest values
+            pending_args = args
+            pending_kwargs = kwargs
+
             if time_since_last >= wait_ms:
                 # Enough time has passed - call immediately if leading
                 if leading:
                     last_call_time = now
+                    pending_call = False  # Clear pending since we're calling now
                     func(*args, **kwargs)
                 else:
                     pending_call = True
@@ -67,19 +74,23 @@ def throttle(
 
             # Schedule trailing call if not already scheduled
             if trailing and pending_call and timer is None:
-                remaining = wait_ms - time_since_last
-                if remaining < 0:
-                    remaining = wait_ms
+                remaining = max(0, wait_ms - time_since_last)
 
                 def trailing_call():
-                    nonlocal pending_call, timer, last_call_time
+                    nonlocal pending_call, timer, last_call_time, pending_args, pending_kwargs
+                    call_args = None
+                    call_kwargs = None
                     with lock:
                         if pending_call:
                             last_call_time = time.time() * 1000
                             pending_call = False
-                            timer = None
-                    # Call outside lock to avoid deadlock
-                    func(*args, **kwargs)
+                            # Capture latest args before releasing lock
+                            call_args = pending_args
+                            call_kwargs = pending_kwargs
+                        timer = None
+                    # Call outside lock with captured latest args
+                    if call_args is not None:
+                        func(*call_args, **call_kwargs)
 
                 timer = threading.Timer(remaining / 1000, trailing_call)
                 timer.daemon = True
@@ -249,9 +260,12 @@ class Ink:
         # Create the Layout - but don't enter the context yet
         self._layout = Layout(self._app_component)
 
-        # For synchronous use (tests), do a one-shot render
-        # This creates a temporary context just for the initial render
-        self._do_sync_render()
+        # NOTE: We intentionally do NOT call _do_sync_render() here for ReactPy components.
+        # If the user calls wait_until_exit(), it will do the render.
+        # If the user needs immediate output without wait_until_exit() (e.g., tests),
+        # they should use render_sync() instead.
+        # This prevents the "double render" issue where both sync and interactive
+        # lifecycle render the same content.
 
     def _render_with_custom_reconciler(self, element: Element):
         """Render using the custom reconciler instead of ReactPy.
@@ -288,6 +302,14 @@ class Ink:
 
         # Render to terminal
         self.on_render()
+
+    def render_sync(self):
+        """Render immediately without waiting for wait_until_exit().
+
+        This is useful for tests that need output without calling wait_until_exit().
+        Note: Effects will NOT persist - for persistent effects, use wait_until_exit().
+        """
+        self._do_sync_render()
 
     def _do_sync_render(self):
         """Do a synchronous one-shot render for immediate output.
@@ -348,24 +370,40 @@ class Ink:
         if self._layout is None:
             return
 
+        # Clear any existing DOM children to prevent duplication
+        # (in case render_sync() was called before wait_until_exit())
+        self.root_node.child_nodes.clear()
+
         # Re-create layout for a fresh context (don't reuse the one from _do_sync_render)
         self._layout = Layout(self._app_component)
 
         async with self._layout:
-            # Initial render
-            update = await self._layout.render()
-            vdom = (
-                update.get("model") if isinstance(update, dict) else getattr(update, "model", None)
-            )
-
-            if vdom:
-                self._backend.vdom_to_dom(vdom, self.root_node)
-                self.calculate_layout()
-                self.on_render()
-
-            # Keep layout context alive for effects until app exits
+            # Continuously consume render updates from ReactPy
+            # This is essential - without this loop, state changes won't update the terminal
             while not self.is_unmounted:
-                await asyncio.sleep(0.05)
+                try:
+                    # Wait for next render update with timeout
+                    update = await asyncio.wait_for(self._layout.render(), timeout=0.1)
+                    vdom = (
+                        update.get("model")
+                        if isinstance(update, dict)
+                        else getattr(update, "model", None)
+                    )
+
+                    if vdom:
+                        self._backend.vdom_to_dom(vdom, self.root_node)
+                        self.calculate_layout()
+                        self.on_render()
+                except asyncio.TimeoutError:
+                    # No update available within timeout, continue loop
+                    # This allows checking is_unmounted periodically
+                    continue
+                except asyncio.CancelledError:
+                    # Task was cancelled, exit gracefully
+                    break
+                except Exception:
+                    # Other errors - exit the loop
+                    break
 
     def calculate_layout(self):
         """Calculate Yoga layout for root node"""
