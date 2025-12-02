@@ -14,6 +14,7 @@ from inkpy.is_in_ci import is_in_ci
 from inkpy.wrap_text import wrap_text
 from inkpy.reconciler.element import Element
 from inkpy.reconciler.reconciler import Reconciler
+from inkpy.reconciler import app_hooks
 
 
 def erase_lines(count: int) -> str:
@@ -191,6 +192,11 @@ class Ink:
                 on_commit=self._on_reconciler_commit,
                 on_compute_layout=self.calculate_layout,
             )
+            
+            # Set up app hooks for the custom reconciler
+            app_hooks.set_app_exit_callback(self.unmount)
+            app_hooks.set_app_stdin(self.options['stdin'])
+            app_hooks.set_app_exit_on_ctrl_c(self.options['exit_on_ctrl_c'])
         
         # Render the element tree
         self._reconciler.render(element)
@@ -451,6 +457,10 @@ class Ink:
         """Clean up and exit"""
         if self.is_unmounted:
             return
+        
+        # Stop custom reconciler input thread if running
+        if self._using_custom_reconciler:
+            app_hooks._stop_input_thread()
         
         self.calculate_layout()
         self.on_render()

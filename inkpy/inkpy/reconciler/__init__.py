@@ -15,6 +15,7 @@ from .hooks import (
 from .reconciler import Reconciler
 from .component import component
 from .components import Box, Text, Newline, Spacer
+from .app_hooks import use_app, use_input
 
 __all__ = [
     "FiberNode",
@@ -40,5 +41,7 @@ __all__ = [
     "Text",
     "Newline",
     "Spacer",
+    "use_app",
+    "use_input",
 ]
 
